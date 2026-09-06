@@ -1089,112 +1089,6 @@ GAME_MODE_DATA = {
 			sVictim.eliminated = true
 		end,
 	},
-	[GAME_MODE_BROKEN_LAMP] = {
-		name = "Broken Lamp",
-		desc = translate("desc_broken_lamp"),
-
-		level = { LEVEL_TOAD_TOWN, LEVEL_KOOPA_KEEP, LEVEL_LIGHTS_OUT },
-		interact = PLAYER_INTERACTIONS_PVP,
-		kbStrength = 25,
-		music = "dark",
-		maxTime = 2 * 60 * 30,
-		showHealth = true,
-		fasterActions = true,
-
-		hostUpdateFunc = function()
-			if gGlobalSyncTable.gameTimer == 1 then
-				local alive = {}
-
-				for_each_connected_player(function(i)
-					local sMario = gPlayerSyncTable[i]
-					sMario.hasLamp = false
-
-					if not sMario.eliminated then
-						table.insert(alive, i)
-					end
-				end)
-
-				if #alive > 0 then
-					local chosen = alive[math.random(#alive)]
-					gGlobalSyncTable.lampOwner = network_global_index_from_local(chosen)
-				end
-			end
-		end,
-
-		marioUpdateFunc = function(m)
-			local gIndex = network_global_index_from_local(m.playerIndex)
-			local sMario = gPlayerSyncTable[m.playerIndex]
-
-			local isLampOwner = (gGlobalSyncTable.lampOwner == gIndex)
-
-			if isLampOwner then
-				m.health = 0x880
-				sonic_set_full_rings(m.playerIndex)
-				m.particleFlags = m.particleFlags | PARTICLE_SPARKLES
-
-				sMario.hasLamp = true
-				return
-			end
-
-			sMario.hasLamp = false
-
-			m.health = m.health - 2
-
-			if m.health <= 0xFF then
-				eliminate_mario(m)
-			end
-		end,
-
-		onPvpFunc = function(attacker, victim, interaction)
-			local aIndex = attacker.playerIndex
-			local vIndex = victim.playerIndex
-
-			local attackerG = network_global_index_from_local(aIndex)
-			local victimG = network_global_index_from_local(vIndex)
-
-			victim.hurtCounter = 0
-			attacker.hurtCounter = 0
-
-			if gGlobalSyncTable.lampOwner == victimG then
-				gGlobalSyncTable.lampOwner = attackerG
-			end
-		end,
-
-		hudRenderFunc = function(screenWidth, screenHeight, sideBarLines, lengthLimit)
-			local lampOwnerIndex = gGlobalSyncTable.lampOwner
-
-			if lampOwnerIndex ~= nil then
-				local ownerName = "None"
-
-				for i = 0, MAX_PLAYERS - 1 do
-					if network_global_index_from_local(i) == lampOwnerIndex then
-						ownerName = gNetworkPlayers[i].name
-						break
-					end
-				end
-
-				add_line_to_table(sideBarLines, ownerName .. " \\#ffffff\\has the lamp", lengthLimit)
-			end
-
-			local gIndex = network_global_index_from_local(0)
-			local isLampOwner = (gIndex == gGlobalSyncTable.lampOwner)
-
-			if not isLampOwner then
-				djui_hud_set_color(0, 0, 0, 100)
-				djui_hud_render_rect(0, 0, screenWidth, screenHeight)
-			end
-
-			return true
-		end,
-
-		descFunc = function(index)
-			local gIndex = network_global_index_from_local(index)
-			if gGlobalSyncTable.lampOwner == gIndex then
-				return "Lamp", true, true
-			end
-			return "Dark", false
-		end,
-	},
 	[GAME_MODE_MURDER] = {
 		name = "Murder Mystery",
 		desc = translate("desc_murder"),
@@ -1487,115 +1381,6 @@ GAME_MODE_DATA = {
 			end
 		end,
 	},
-	[GAME_MODE_VIRUS] = {
-		name = "The Virus",
-		desc = translate("desc_virus"),
-		level = {
-			LEVEL_TOAD_TOWN,
-			LEVEL_KOOPA_KEEP,
-			LEVEL_LIGHTS_OUT,
-			LEVEL_DS_FORT,
-		},
-		music = "quick",
-		interact = PLAYER_INTERACTIONS_PVP,
-		firstRoundTime = 1500,
-		roundTime = 900,
-		maxRounds = 5,
-		kbStrength = 20,
-		fasterActions = true,
-		doEliminationPoints = true,
-		hostUpdateFunc = function()
-			if gGlobalSyncTable.roundTimer ~= 1 then
-				return
-			end
-
-			local aliveTable = {}
-
-			for_each_connected_player(function(i)
-				local sMario = gPlayerSyncTable[i]
-
-				if not sMario.eliminated and not sMario.spectator then
-					table.insert(aliveTable, i)
-				end
-			end)
-
-			-- give virus at start of round
-			if gGlobalSyncTable.round == 1 then
-				local virusToAssign = 1
-
-				for i = #aliveTable, 2, -1 do
-					local j = math.random(i)
-					aliveTable[i], aliveTable[j] = aliveTable[j], aliveTable[i]
-				end
-
-				while virusToAssign ~= 0 and #aliveTable ~= 0 do
-					local index = aliveTable[1]
-					gPlayerSyncTable[index].virus = true
-					table.remove(aliveTable, 1)
-					virusToAssign = 0
-				end
-			end
-
-			-- transfer virus when infected player dies
-			for_each_connected_player(function(i)
-				local sMario = gPlayerSyncTable[i]
-
-				if sMario.eliminated and sMario.virus then
-					sMario.virus = false
-
-					if #aliveTable > 0 then
-						local chosen = aliveTable[math.random(#aliveTable)]
-						gPlayerSyncTable[chosen].virus = true
-					end
-				end
-			end)
-		end,
-		marioUpdateFunc = function(m)
-			if gPlayerSyncTable[m.playerIndex].virus == true then
-				m.health = m.health - 2
-				m.marioBodyState.modelState = m.marioBodyState.modelState | MODEL_STATE_METAL
-			end
-			if gGlobalSyncTable.roundTimer == 1 and gGlobalSyncTable.round == 1 then
-				m.invincTimer = 150
-			end
-			if m.playerIndex ~= 0 then
-				return
-			end
-			if m.action == ACT_LAVA_BOOST then
-				set_to_spawn_pos(m, true)
-				m.hurtCounter = 4
-				m.invincTimer = 90
-			end
-		end,
-		onPvpFunc = function(attacker, victim, interaction)
-			local sAttacker = gPlayerSyncTable[attacker.playerIndex]
-			local sVictim = gPlayerSyncTable[victim.playerIndex]
-			if sAttacker.virus == true then
-				sVictim.virus = true
-				sAttacker.virus = false
-				victim.invincTimer = 120
-			end
-		end,
-		hudRenderFunc = function(screenWidth, screenHeight, sideBarLines, lengthLimit)
-			local gData = GAME_MODE_DATA[gGlobalSyncTable.gameMode or 0]
-			if gPlayerSyncTable[gMarioStates[0].playerIndex].virus == true then
-				add_line_to_table(sideBarLines, "" .. translate("infected"), lengthLimit)
-			end
-		end,
-		descFunc = function(index)
-			if gGlobalSyncTable.gameState ~= GAME_STATE_ACTIVE then
-				return
-			end
-			local sMario = gPlayerSyncTable[index]
-			if sMario.eliminated then
-				return
-			end
-			if not sMario.virus then
-				return
-			end
-			return "Infected", false, true
-		end,
-	},
 	[GAME_MODE_SIMON] = {
 		name = "Simon Says",
 		desc = translate("desc_simon"),
@@ -1645,12 +1430,17 @@ GAME_MODE_DATA = {
 			for var = 1, 35 do
 				if GSC.roundTimer == 6 * var * 30 then
 					play_sound(SOUND_ACTION_CLIMB_UP_TREE, gGlobalSoundSource)
-					djui_chat_message_create("" .. translate("simon") .. translate_simon_do())
+					network_send(true, {
+						id = PACKET_SIMON_COMMAND,
+						simonSays = GSC.simonSays,
+					})
 				end
 			end
 			if GSC.round == 1 and GSC.roundTimer == 1 then
-				djui_popup_create("" .. translate("simon_connected"), 1)
-				djui_chat_message_create("" .. translate("simon") .. translate_simon_do())
+				network_send(true, {
+					id = PACKET_SIMON_COMMAND,
+					simonSays = GSC.simonSays,
+				})
 			end
 		end,
 		hostUpdateFunc = function()
@@ -1790,54 +1580,196 @@ GAME_MODE_DATA = {
 	[GAME_MODE_HOT_RING] = {
 		name = "Hot Ring",
 		desc = translate("desc_hot_ring"),
-		level = {
-			LEVEL_TOAD_TOWN,
-			LEVEL_KOOPA_KEEP,
-			LEVEL_LIGHTS_OUT,
-			LEVEL_DS_FORT,
-		},
-		music = "stealth",
-		firstRoundTime = 1350,
-		roundTime = 750,
-		maxRounds = 3,
-		kbStrength = 22,
-		interact = PLAYER_INTERACTIONS_SOLID,
-		doEliminationPoints = true,
+		level = LEVEL_TOAD_TOWN,
+		interact = PLAYER_INTERACTIONS_PVP,
+		kbStrength = 12,
+		doPlacementPoints = true,
 		showHealth = true,
+		music = "stealth",
+		maxTime = 1 * 60 * 30,
 		marioUpdateFunc = function(m)
-			if m.playerIndex ~= 0 then
-				return
-			end
-			local centerX, centerZ = 0, 0
-			if gGlobalSyncTable.gameLevel == LEVEL_KOOPA_KEEP then
-				centerX, centerZ = 1575, -2000
-			elseif gGlobalSyncTable.gameLevel == LEVEL_DS_FORT then
-				centerX, centerZ = 1000, 1000
-			end
-			local radius = math.max(400, 4500 - gGlobalSyncTable.gameTimer * 1.5)
-			local dist = math.sqrt((m.pos.x - centerX) ^ 2 + (m.pos.z - centerZ) ^ 2)
-			if radius < dist then
-				m.health = m.health - 10
-			end
-			if m.action == ACT_LAVA_BOOST then
-				set_to_spawn_pos(m, true)
-				m.hurtCounter = 4
-			end
-			for var1 = 1, 410 do
-				if gGlobalSyncTable.gameTimer == var1 * 9 then
-					for var2 = 1, 64 do
-						local angles = var2 * 65536 / 64
-						spawn_non_sync_object(
-							id_bhvSparkle,
-							E_MODEL_RED_FLAME,
-							centerX + radius * sins(angles),
-							m.pos.y + 100,
-							centerZ + radius * coss(angles),
-							nil
-						)
-					end
+			local minRadius = 1200
+			local radius = math.max(minRadius, 9000 - gGlobalSyncTable.gameTimer * 9)
+			local dist = math.sqrt(m.pos.x * m.pos.x + m.pos.z * m.pos.z)
+
+			if dist > radius then
+				m.health = m.health - 0x20
+
+				if m.playerIndex == 0 and gGlobalSyncTable.gameTimer % 30 == 0 then
+					play_sound(SOUND_MENU_CAMERA_BUZZ, gGlobalSoundSource)
 				end
 			end
+		end,
+	},
+	[GAME_MODE_FREEZE_TAG] = {
+		name = "Freeze Tag",
+		desc = translate("desc_freeze_tag"),
+		level = { LEVEL_TOAD_TOWN, LEVEL_KOOPA_KEEP, LEVEL_DS_FORT },
+		interact = PLAYER_INTERACTIONS_PVP, -- so invulnerability frames exist
+		kbStrength = 0, -- tags shouldn't knock people around
+		music = "quick",
+		roundTime = 60 * 30, -- 1 minute rounds
+		maxRounds = 5,
+		doEliminationPoints = true,
+		fasterActions = true,
+
+		marioUpdateFunc = function(m)
+			local sMario = gPlayerSyncTable[m.playerIndex]
+
+			m.health = 0x880
+
+			sonic_set_full_rings(m.playerIndex)
+
+			if sMario.frozen then
+				-- lock the player in place
+				m.vel.x = 0
+				m.vel.y = math.min(m.vel.y, 0)
+				m.vel.z = 0
+				m.forwardVel = 0
+				m.freeze = 2 -- re-applied every frame, freezes anim/movement
+				m.particleFlags = m.particleFlags | PARTICLE_SNOW
+			elseif sMario.freezeTagIsIt then
+				m.particleFlags = m.particleFlags | PARTICLE_SPARKLES
+			end
+
+			if m.playerIndex ~= 0 or not sMario.frozen then
+				return
+			end
+
+			-- check for a nearby unfrozen non-tagger to thaw us out
+			for_each_connected_player(function(i)
+				if i == m.playerIndex then
+					return
+				end
+
+				local sOther = gPlayerSyncTable[i]
+
+				if sOther.eliminated or sOther.frozen or sOther.freezeTagIsIt then
+					return
+				end
+
+				local dist = dist_between_objects(gMarioStates[i].marioObj, m.marioObj)
+
+				if dist <= 150 then
+					sMario.frozen = false
+
+					play_sound(SOUND_GENERAL_COIN, gGlobalSoundSource)
+
+					djui_chat_message_create("\\#7ad3ff\\You've been thawed out!")
+
+					return true
+				end
+			end)
+		end,
+
+		onPvpFunc = function(attacker, victim, interaction)
+			local sAttacker = gPlayerSyncTable[attacker.playerIndex]
+			local sVictim = gPlayerSyncTable[victim.playerIndex]
+
+			victim.hurtCounter = 0
+			attacker.hurtCounter = 0
+
+			if sAttacker.freezeTagIsIt and not sVictim.freezeTagIsIt and not sVictim.frozen then
+				sVictim.frozen = true
+
+				play_sound(SOUND_MENU_CAMERA_BUZZ, gGlobalSoundSource)
+
+				if victim.playerIndex == 0 then
+					djui_chat_message_create("\\#ff5050\\You've been frozen! Wait for a teammate to thaw you.")
+				end
+			end
+		end,
+
+		hostUpdateFunc = function()
+			-- pick tagger(s) at the start of each round
+			if gGlobalSyncTable.roundTimer == 1 then
+				local alive = {}
+
+				for_each_connected_player(function(i)
+					local sMario = gPlayerSyncTable[i]
+
+					sMario.frozen = false
+					sMario.freezeTagIsIt = false
+
+					if not sMario.eliminated then
+						table.insert(alive, i)
+					end
+				end)
+
+				local taggers = math.max(1, #alive // 4)
+
+				for t = 1, taggers do
+					if #alive == 0 then
+						break
+					end
+
+					local pick = math.random(#alive)
+
+					gPlayerSyncTable[alive[pick]].freezeTagIsIt = true
+
+					table.remove(alive, pick)
+				end
+			end
+
+			-- end the round once every non-tagger is frozen
+			if gGlobalSyncTable.roundTimer > 30 then
+				local freeCount = 0
+
+				for_each_connected_player(function(i)
+					local sMario = gPlayerSyncTable[i]
+
+					if not sMario.eliminated and not sMario.freezeTagIsIt and not sMario.frozen then
+						freeCount = freeCount + 1
+					end
+				end)
+
+				if freeCount == 0 then
+					-- eliminate all frozen players
+					for_each_connected_player(function(i)
+						local sMario = gPlayerSyncTable[i]
+
+						if sMario.frozen and not sMario.eliminated then
+							eliminate_mario(gMarioStates[i])
+						elseif sMario.freezeTagIsIt then
+							sMario.roundScore = (sMario.roundScore or 0) + 1
+						end
+					end)
+
+					return true
+				end
+			end
+		end,
+
+		rejoinFunc = function(sMario)
+			-- mid-round joiners come in unfrozen and not "it"
+			sMario.frozen = false
+			sMario.freezeTagIsIt = false
+		end,
+
+		descFunc = function(index)
+			local sMario = gPlayerSyncTable[index]
+
+			if sMario.eliminated then
+				return
+			end
+
+			if sMario.freezeTagIsIt then
+				return "It", true, true -- desc, highlight, yellow
+			elseif sMario.frozen then
+				return "Frozen", false
+			end
+		end,
+
+		hudRenderFunc = function(screenWidth, screenHeight, sideBarLines, lengthLimit)
+			local sMario = gPlayerSyncTable[gMarioStates[0].playerIndex]
+
+			if sMario.freezeTagIsIt then
+				add_line_to_table(sideBarLines, "\\#ff5050\\You are IT! Freeze everyone!", lengthLimit)
+			elseif sMario.frozen then
+				add_line_to_table(sideBarLines, "\\#7ad3ff\\Frozen! Wait for an ally to thaw you.", lengthLimit)
+			end
+
+			return true
 		end,
 	},
 }

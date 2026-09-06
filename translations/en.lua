@@ -9,6 +9,7 @@ return {
 
 	simon = "\\#5555ff\\Simon\\#dcdcdc\\: ",
 	simon_connected = "\\#5555ff\\Simon\\#dcdcdc\\ connected",
+	simon_eliminated = "\\#ff2828\\ was eliminated by Simon!",
 
 	-- Murder instructions
 	murder_sheriff = "As the Sheriff, you must find the murderer and kill it. If done correctly, the game ends and the murderer will gain less points. But, if you fail to do so, and you hit an innocent, you die. If you die, you drop your suit.",
@@ -70,6 +71,8 @@ return {
 	desc_bombthrower = "There's Bob-ombs falling from the sky! If you lose all your health, you lose the minigame! At the end of each round, coins will spawn in the middle of the stage. Survive the longest!",
 
 	desc_hot_ring = "Stay inside the ring! If you step outside, you'll lose health. The ring keeps shrinking, and you can push others out! Win by being the last one standing!",
+
+	desc_freeze_tag = "Freeze your opponents! Frozen players can be thawed by their teammates.",
 
 	minigame_text = "Minigame ",
 
@@ -190,4 +193,69 @@ return {
 	hint_22 = "I'ma Wario, and I'ma gonna win Duels with my exclusive info! You can get a full heal if you take out another player. It's the perfect strategy, since I'm the best brawler around!",
 	hint_23 = "This mod is brought to you by our (totally legit) sponsors from the Squeex YouTube community! You can see their ads on the monitor in the lobby.",
 	hint_24 = "This audio files used to take up 23.7 MB! It took ages to download. After Squishy trimmed and compressed all of the audio, this size was reduced to just over 2.5 MB. Wow...",
+
+	-- HUD Playerlist translations
+	unknown = "Unknown",
+	player_num = "Player ",
+	players_colon = "Players:",
+	name_header = "Name",
+	description_header = "Description",
+	location_header = "Location",
+	ping_header = "Ping",
+	game_wins_header = "Game Wins\nMinigame Wins",
+	l_mods = "[L] Mods",
+	l_players = "[L] Players",
+	more_suffix = " more",
+	no_mods_active = "No mods active",
+	active_mods = "Active Mods (",
+
+	-- HUD Main translations
+	starting_in = "Starting in ",
+	you_survived = "\\#50ff50\\YOU SURVIVED",
+	you_died = "\\#ff2828\\YOU DIED",
+	no_one_won = "\\#ff2828\\No one won...",
+	multiple_winners = "\\#ffff50\\Multiple winners!",
+	wins_suffix = "\\#ffff50\\ wins!",
+	winners_colon = "\\#ffff50\\Winners:",
+	alive = "\\#50ff50\\Alive",
+	dead = "\\#ff2828\\Dead",
+	rankings = "\\#ffff50\\RANKINGS",
+	modifiers_title = "\\#ffff50\\MODIFIERS",
+
+	-- Credits
+	creator = "Creator",
+	minigames = "Minigames",
+	ideas = "Ideas",
+
+	-- Audio
+	now_playing = "Now Playing",
+
+	-- Spectator messages
+	entered_spectator = "\\#ffff50\\Entered spectator mode.",
+	exited_spectator = "\\#ffff50\\Exited spectator mode.",
+	exit_spectator_after_game = "\\#ffff50\\You will exit spectator after this game.",
+	exit_spectator_after_round = "\\#ffff50\\You will exit spectator after this round.",
+	exit_spectator_after_minigame = "\\#ffff50\\You will exit spectator after this minigame.",
+
+	-- Game messages
+	made_spectator = "\\#ff5050\\You were made a spectator. Move again to cancel.",
+	connected = " \\#ffffff\\connected.",
+	can_rejoin = "\\#ffff50\\ can rejoin to restore their progress.",
+	progress_restored = "\\#ffff50\\Your progress was restored!",
+	moderator_pick = "\\#ffff50\\Since you're the first moderator available, you will pick this minigame!",
+	killed_player_heal = "\\#ffff50\\You killed ",
+	got_full_heal = "!\\n\\#ffff50\\Got a full heal!",
+	killed_player = "\\#ffff50\\You killed ",
+	killed_suffix = "!",
+	correcting_desync = "Attempting to correct desync...",
+	ready = "Ready!",
+
+	simon_jump = "Jump!",
+	simon_attack = "Attack!",
+	simon_dont_move = "Don't Move!",
+	simon_walk = "Walk!",
+	simon_lava = "Burn in lava!",
+	simon_ledge = "Grab a ledge!",
+	simon_run = "Run!",
+	simon_backflip = "Do a Backflip!",
 }

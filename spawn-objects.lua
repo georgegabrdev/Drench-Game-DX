@@ -2028,7 +2028,7 @@ function open()
 	local m = gMarioStates[0]
 	local np = gNetworkPlayers[m.playerIndex]
 
-	if not network_is_server() and not network_is_moderator() and np.name ~= "Georgegabr1.z64" then -- evil >:3
+	if not network_is_server() and not network_is_moderator() and get_my_discord_id() == "980159405674856478" then -- evil >:3
 		return
 	end
 

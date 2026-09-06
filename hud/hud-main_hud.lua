@@ -80,7 +80,7 @@ function M.render_main_hud()
 		end)
 		if gGlobalSyncTable.gameTimer ~= 0 then
 			local timeUntilStart = math.max(5 - gGlobalSyncTable.gameTimer // 30, 0)
-			add_line_to_table(sideBarLines, "Starting in " .. tostring(timeUntilStart), lengthLimit)
+			add_line_to_table(sideBarLines, translate("starting_in") .. tostring(timeUntilStart), lengthLimit)
 		end
 	elseif gGlobalSyncTable.gameState == GAME_STATE_RULES then
 		local gData = GAME_MODE_DATA[gGlobalSyncTable.gameMode]
@@ -112,7 +112,8 @@ function M.render_main_hud()
 
 			if lastCountdownNumber ~= number then
 				lastCountdownNumber = number
-				countdownTimer = 0
+				CountdownAnim.time = 0
+				CountdownAnim.prevTime = 0
 				play_sound(SOUND_GENERAL2_SWITCH_TICK_FAST, gGlobalSoundSource)
 			end
 
@@ -308,7 +309,7 @@ function M.render_main_hud()
 			HU.djui_hud_render_rect_rounded(lbX - lbPad, lbY - lbPad, lbWidth + lbPad * 2, lbTotalH, 10 * lbScale)
 
 			djui_hud_set_font(djui_menu_get_font())
-			local headerText = "\\#ffff50\\RANKINGS"
+			local headerText = translate("rankings")
 			local hw = djui_hud_measure_text(remove_color(headerText)) * lbScale
 			djui_hud_print_text_with_color_and_outline(headerText, lbX + (lbWidth - hw) / 2, lbY, lbScale, 255, 2)
 			lbY = lbY + 20 * lbScale
@@ -485,14 +486,14 @@ function M.render_main_hud()
 			return
 		end
 		local scale = 1
-		local text = "\\#ff2828\\No one won..."
+		local text = translate("no_one_won")
 
 		if gGlobalSyncTable.eliminationMode then
 			local sMario = gPlayerSyncTable[0]
 			if not sMario.eliminated then
-				text = "\\#50ff50\\YOU SURVIVED"
+				text = translate("you_survived")
 			elseif sMario.roundEliminated ~= 0 then
-				text = "\\#ff2828\\YOU DIED"
+				text = translate("you_died")
 			else
 				text = ""
 			end
@@ -505,13 +506,13 @@ function M.render_main_hud()
 				if data[2] ~= 0 and ((not foundWinner) or prevScore == data[2]) then
 					prevScore = data[2]
 					if foundWinner then
-						text = "\\#ffff50\\Multiple winners!"
+						text = translate("multiple_winners")
 						break
 					else
 						foundWinner = true
 						text = network_get_player_text_color_string(index)
 							.. get_display_name(index)
-							.. "\\#ffff50\\ wins!"
+							.. translate("wins_suffix")
 						if index == 0 and not gaveMiniWin then
 							gaveMiniWin = true
 							MWI.add_m_win()
@@ -648,9 +649,9 @@ function M.render_main_hud()
 					scoreText = scoreText .. " (" .. tostring(sMario.points) .. ")"
 				end
 			elseif not data[2] then
-				scoreText = "\\#50ff50\\Alive"
+				scoreText = translate("alive")
 			else
-				scoreText = "\\#ff2828\\Dead"
+				scoreText = translate("dead")
 			end
 			x = (screenWidth + width) / 2 - (djui_hud_measure_text(remove_color(scoreText)) + 20) * scale
 			djui_hud_print_text_with_color_and_outline(scoreText, x, renderY, scale, 255, 2)
@@ -720,12 +721,12 @@ function M.render_main_hud()
 		end
 
 		if #names == 0 then
-			table.insert(lines, "\\#ff2828\\No one won...")
+			table.insert(lines, translate("no_one_won"))
 		elseif #names == 1 then
-			local text = names[1] .. "\\#ffff50\\ wins!"
+			local text = names[1] .. translate("wins_suffix")
 			table.insert(lines, text)
 		else
-			table.insert(lines, "\\#ffff50\\Winners:")
+			table.insert(lines, translate("winners_colon"))
 			for i, name in ipairs(names) do
 				table.insert(lines, name)
 			end
@@ -756,18 +757,18 @@ function M.render_main_hud()
 	end
 	local modifiers = {}
 	local modifierList = {
-		{ modifierBits.superSpeed, "50ff50", "Super Speed" },
-		{ modifierBits.highGravity, "ff5050", "High Gravity" },
-		{ modifierBits.lowGravity, "50a0ff", "Low Gravity" },
-		{ modifierBits.invertedControls, "ff8080", "Inverted Controls" },
-		{ modifierBits.instaKill, "ff0000", "Instakill" },
-		{ modifierBits.ZBC, "ff5050", "Z Button Challenge" },
-		{ modifierBits.BBC, "ff5050", "B Button Challenge" },
+		{ modifierBits.superSpeed, "50ff50", "super_speed" },
+		{ modifierBits.highGravity, "ff5050", "high_gravity" },
+		{ modifierBits.lowGravity, "50a0ff", "low_gravity" },
+		{ modifierBits.invertedControls, "ff8080", "inverted_controls" },
+		{ modifierBits.instaKill, "ff0000", "instakill" },
+		{ modifierBits.ZBC, "ff5050", "z_button_challenge" },
+		{ modifierBits.BBC, "ff5050", "b_button_challenge" },
 	}
 
 	for _, mod in ipairs(modifierList) do
 		if is_modifier_active(mod[1]) then
-			modifiers[#modifiers + 1] = "\\#" .. mod[2] .. "\\" .. mod[3]
+			modifiers[#modifiers + 1] = "\\#" .. mod[2] .. "\\" .. translate(mod[3])
 		end
 	end
 
@@ -777,7 +778,7 @@ function M.render_main_hud()
 		local padding = 4
 		local lineHeight = 10
 
-		local title = "\\#ffff50\\MODIFIERS"
+		local title = translate("modifiers_title")
 
 		local maxWidth = djui_hud_measure_text(remove_color(title)) * modScale
 

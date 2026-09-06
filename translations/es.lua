@@ -11,6 +11,7 @@ return {
 
 	simon = "\\#5555ff\\Simón\\#dcdcdc\\: ",
 	simon_connected = "\\#5555ff\\Simón\\#dcdcdc\\ se conectó",
+	simon_eliminated = "\\#ff2828\\ ¡fue eliminado por Simon!",
 
 	-- Murder instructions
 	murder_sheriff = "Como Sheriff, debes encontrar al asesino y matarlo. Si lo haces correctamente, el juego termina y el asesino ganará menos puntos. Pero si fallas y golpeas a un inocente, morirás. Si mueres, dejarás caer tu traje.",
@@ -194,4 +195,70 @@ return {
 	hint_22 = "¡Soy Wario y voy a ganar Duelos con mi información exclusiva! Puedes obtener una curación completa si eliminas a otro jugador. ¡Es la estrategia perfecta, ya que soy el mejor luchador del lugar!",
 	hint_23 = "¡Este mod te lo traen nuestros (totalmente legítimos) patrocinadores de la comunidad de YouTube de Squeex! ¡Puedes ver sus anuncios en el monitor en el vestíbulo.",
 	hint_24 = "¡Estos archivos de audio solían ocupar 23.7 MB! Tomó una eternidad descargar. Después de que Squishy recortó y comprimió todo el audio, ¡este tamaño se redujo a poco más de 2.5 MB! ¡Wow...",
+
+	-- HUD Playerlist translations
+	unknown = "Desconocido",
+	player_num = "Jugador ",
+	players_colon = "Jugadores:",
+	name_header = "Nombre",
+	description_header = "Descripción",
+	location_header = "Ubicación",
+	ping_header = "Ping",
+	game_wins_header = "Victorias de Juego\nVictorias de Minijuego",
+	l_mods = "[L] Mods",
+	l_players = "[L] Jugadores",
+	more_suffix = " más",
+	no_mods_active = "No hay mods activos",
+	active_mods = "Mods Activos (",
+
+	-- HUD Main translations
+	starting_in = "Comenzando en ",
+	you_survived = "\\#50ff50\\SOBREVIVISTE",
+	you_died = "\\#ff2828\\MORISTE",
+	no_one_won = "\\#ff2828\\Nadie ganó...",
+	multiple_winners = "\\#ffff50\\¡Múltiples ganadores!",
+	wins_suffix = "\\#ffff50\\ gana!",
+	winners_colon = "\\#ffff50\\Ganadores:",
+	alive = "\\#50ff50\\Vivo",
+	dead = "\\#ff2828\\Muerto",
+	rankings = "\\#ffff50\\CLASIFICACIÓN",
+	modifiers_title = "\\#ffff50\\MODIFICADORES",
+
+	-- Credits
+	creator = "Creador",
+	minigames = "Minijuegos",
+	ideas = "Ideas",
+
+	-- Audio
+	now_playing = "Reproduciendo Ahora",
+
+	-- Spectator messages
+	entered_spectator = "\\#ffff50\\Entraste en modo espectador.",
+	exited_spectator = "\\#ffff50\\Saliste del modo espectador.",
+	exit_spectator_after_game = "\\#ffff50\\Saldrás del modo espectador después de este juego.",
+	exit_spectator_after_round = "\\#ffff50\\Saldrás del modo espectador después de esta ronda.",
+	exit_spectator_after_minigame = "\\#ffff50\\Saldrás del modo espectador después de este minijuego.",
+
+	-- Game messages
+	made_spectator = "\\#ff5050\\Fuiste convertido en espectador. Muévete de nuevo para cancelar.",
+	connected = " \\#ffffff\\conectado.",
+	can_rejoin = "\\#ffff50\\ puede volver a unirse para restaurar su progreso.",
+	progress_restored = "\\#ffff50\\¡Tu progreso fue restaurado!",
+	moderator_pick = "\\#ffff50\\¡Como eres el primer moderador disponible, elegirás este minijuego!",
+	killed_player_heal = "\\#ffff50\\¡Mataste a ",
+	got_full_heal = "!\\n\\#ffff50\\¡Obtuviste curación completa!",
+	killed_player = "\\#ffff50\\¡Mataste a ",
+	killed_suffix = "!",
+	correcting_desync = "Intentando corregir desincronización...",
+	ready = "¡Listo!",
+
+	simon_jump = "¡Salta!",
+	simon_attack = "¡Ataca!",
+	simon_dont_move = "¡No te muevas!",
+	simon_walk = "¡Camina!",
+	simon_lava = "¡Quémate en la lava!",
+	simon_ledge = "¡Agarra un borde!",
+	simon_run = "¡Corre!",
+	simon_backflip = "¡Haz un backflip!",
+	desc_freeze_tag = "¡Congela a tus oponentes! Los jugadores congelados pueden ser descongelados por sus compañeros.",
 }

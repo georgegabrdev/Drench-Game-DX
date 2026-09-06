@@ -42,7 +42,7 @@ end
 hook_chat_command("end", "Ends the round", end_round)
 
 function download_link()
-	djui_chat_message_create("\\#00ffff\\Download link: \\#ffffff\\https://github.com/georgegabrdev/DRENCH-GAME-DEV")
+	djui_chat_message_create("\\#00ffff\\Download link: \\#ffffff\\https://github.com/georgegabrdev/Drench-Game-DX")
 end
 
 hook_chat_command("download", "Provides a link to download the mod", download_link)

@@ -1,4 +1,4 @@
--- name: \\#00ffff\\Drench Game DX v1.3.1
+-- name: \\#00ffff\\Drench Game DX v1.3.2
 -- description: Squid Game in Mario 64!\n\nCommissioned by Drenchy\nInspired by Dani's \"Crab Game\"\n\nProgramming: EmilyEmmi\n\nMaps: biobak, EmilyEmmi, Woissil\n\nSoundtrack: murioz, Awesome Seal Guy (YT)\n\nVoice Acting:\nEspi as Toad\nSqueex as Mingle Callout\nTrashcam as Waluigi\n\nAds: Squeex's Community\n\nSpecial Thanks: Squishy
 -- category: gamemode
 -- incompatible: gamemode
@@ -23,18 +23,17 @@ GAME_MODE_LIGHTS_OUT = 6
 GAME_MODE_DICE = 7
 GAME_MODE_COIN_RAIN = 8
 GAME_MODE_DEATH_HIT = 9
-GAME_MODE_BROKEN_LAMP = 10
-GAME_MODE_MURDER = 11
-GAME_MODE_RUSSIAN_ROULETTE = 12
-GAME_MODE_FIERY = 13
-GAME_MODE_RUN = 14
-GAME_MODE_VIRUS = 15
-GAME_MODE_SIMON = 16
-GAME_MODE_BOMB_THROWER = 17
-GAME_MODE_BALLOON_MADNESS = 18
-GAME_MODE_HOT_RING = 19
-GAME_MODE_DUEL = 20 -- needs to be at the end due to its special nature
-GAME_MODE_MAX = 21
+GAME_MODE_MURDER = 10
+GAME_MODE_RUSSIAN_ROULETTE = 11
+GAME_MODE_FIERY = 12
+GAME_MODE_RUN = 13
+GAME_MODE_SIMON = 14
+GAME_MODE_BOMB_THROWER = 15
+GAME_MODE_BALLOON_MADNESS = 16
+GAME_MODE_HOT_RING = 17
+GAME_MODE_FREEZE_TAG = 18
+GAME_MODE_DUEL = 19 -- needs to be at the end due to its special nature
+GAME_MODE_MAX = 20
 
 TEAM_SELECTION_RANDOM = 0
 TEAM_SELECTION_HOST = 1
@@ -178,6 +177,8 @@ for i = 0, MAX_PLAYERS - 1 do
 	sMario.murderIsMurderer = false
 	sMario.murderIsSheriff = false
 	sMario.rSelectedNumber = 1
+	sMario.frozen = false
+	sMario.freezeTagIsIt = false
 	sMario.virus = false
 	sMario.balloons = 3
 	sMario.victory = false
@@ -214,6 +215,8 @@ function load_on_sync()
 	sMario.murderIsMurderer = false
 	sMario.murderIsSheriff = false
 	sMario.rSelectedNumber = 1
+	sMario.frozen = false
+	sMario.freezeTagIsIt = false
 	sMario.virus = false
 	sMario.balloons = 3
 	sMario.victory = false
@@ -501,7 +504,7 @@ function mario_update(m)
 				elseif afkTimer >= 60 * 30 then
 					afkSpectator = true
 					toggle_spectator()
-					djui_chat_message_create("\\#ff5050\\You were made a spectator. Move again to cancel.")
+					djui_chat_message_create(translate("made_spectator"))
 				end
 			end
 		else
@@ -674,7 +677,9 @@ function mario_update(m)
 	local yellow = false
 	local desc = ""
 	local function get_description_color(defaultColor, playerIndex)
-		if network_is_server() and playerIndex == 0 and get_my_discord_id() == "980159405674856478" then
+		local tagId = gPlayerSyncTable[0].tagId
+
+		if (tagId & TAG_TYPE.CREATOR) ~= 0 then
 			local hue = (get_global_timer() * 4) % 360
 			return HSV_to_RGB(hue, 100, 1)
 		end
@@ -1763,7 +1768,7 @@ function on_player_connected(m)
 	local color = network_get_player_text_color_string(m.playerIndex)
 	local name = gNetworkPlayers[m.playerIndex].name
 
-	djui_chat_message_create(color .. name .. " \\#ffffff\\connected.")
+	djui_chat_message_create(color .. name .. translate("connected"))
 end
 
 hook_event(HOOK_ON_PLAYER_CONNECTED, on_player_connected)
@@ -2199,6 +2204,28 @@ function on_packet_dice_roll(data, self)
 	end
 end
 
+function on_packet_simon_command(data, self)
+	local commands = {
+		[1] = "simon_jump",
+		[2] = "simon_attack",
+		[3] = "simon_dont_move",
+		[4] = "simon_walk",
+		[5] = "simon_lava",
+		[6] = "simon_ledge",
+		[7] = "simon_run",
+		[8] = "simon_backflip",
+	}
+
+	local key = commands[data.command]
+	if not key then
+		return
+	end
+
+	local text = translate(key)
+
+	djui_chat_message_create("\\#ffff50\\Simon Says: \\#ffffff\\" .. text)
+end
+
 PACKET_STAR_STEAL = 0
 PACKET_MINGLE_CALLOUT = 1
 PACKET_MINGLE_RESTART = 2
@@ -2211,6 +2238,7 @@ PACKET_KILL = 8
 PACKET_REQUEST_DESYNC_FIX = 9
 PACKET_DESYNC_FIX = 10
 PACKET_DICE_ROLL = 11
+PACKET_SIMON_COMMAND = 12
 sPacketTable = {
 	[PACKET_STAR_STEAL] = on_packet_star_steal,
 	[PACKET_MINGLE_CALLOUT] = on_packet_mingle_callout,
@@ -2224,6 +2252,7 @@ sPacketTable = {
 	[PACKET_REQUEST_DESYNC_FIX] = on_packet_request_desync_fix,
 	[PACKET_DESYNC_FIX] = on_packet_desync_fix,
 	[PACKET_DICE_ROLL] = on_packet_dice_roll,
+	[PACKET_SIMON_COMMAND] = on_packet_simon_command,
 }
 
 function on_packet_receive(data)
@@ -2259,3 +2288,4 @@ require("./hud/hud-main")
 require("spawn-objects")
 require("./tweaks/z_destroyObjects")
 require("./tweaks/commands")
+require("./tweaks/death-messages")

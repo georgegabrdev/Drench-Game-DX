@@ -978,6 +978,59 @@ end
 
 id_bhvKothArea = hook_behavior(nil, OBJ_LIST_GENACTOR, false, koth_area_init, koth_area_loop, "bhvKothArea")
 
+-- visible shrinking safe-zone for Hot Ring
+-- The gameplay damage already uses a radius centered at (0, 0).
+-- This object only renders that same radius on the floor so players can see the safe zone.
+---@param o Object
+function hot_ring_area_init(o)
+	obj_set_model_extended(o, E_MODEL_KOTH_AREA)
+	o.oFlags = OBJ_FLAG_UPDATE_GFX_POS_AND_ANGLE | OBJ_FLAG_ACTIVE_FROM_AFAR
+	o.header.gfx.skipInViewCheck = true
+	o.oFaceAnglePitch = 0
+	o.oFaceAngleRoll = 0
+end
+
+---@param o Object
+function hot_ring_area_loop(o)
+	if gGlobalSyncTable.gameMode ~= GAME_MODE_HOT_RING then
+		cur_obj_disable_rendering()
+		o.oTimer = 0
+		return
+	end
+
+	-- Keep the marker visible during the rules/countdown and during active play.
+	cur_obj_enable_rendering()
+	o.oAnimState = 1
+	o.oPosX = 0
+	o.oPosY = 368
+	o.oPosZ = 0
+	o.oFaceAngleYaw = o.oFaceAngleYaw + 0x80
+
+	local minRadius = 1200
+	local hotRingTimer = gGlobalSyncTable.gameTimer or 0
+	local radius = math.max(minRadius, 9000 - hotRingTimer * 9)
+
+	-- kothArea_geo is built around roughly a 500-unit radius; scale X/Z to match Hot Ring.
+	local scale = radius / 500
+	obj_scale_xyz(o, scale, 1, scale)
+end
+
+id_bhvHotRingArea =
+	hook_behavior(nil, OBJ_LIST_GENACTOR, false, hot_ring_area_init, hot_ring_area_loop, "bhvHotRingArea")
+
+function hot_ring_area_update()
+	if gGlobalSyncTable.gameMode ~= GAME_MODE_HOT_RING then
+		return
+	end
+	if obj_get_first_with_behavior_id(id_bhvHotRingArea) ~= nil then
+		return
+	end
+
+	spawn_object_no_rotate(id_bhvHotRingArea, E_MODEL_KOTH_AREA, 0, 368, 0, nil, false)
+end
+
+hook_event(HOOK_UPDATE, hot_ring_area_update)
+
 -- non-collideable coins used for the ending sequence
 ---@param o Object
 function effect_coin_init(o)

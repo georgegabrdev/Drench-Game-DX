@@ -69,67 +69,6 @@ function murder_instructions_calc(IsSheriff, IsMurderer)
 	end
 end
 
-function translate_simon_do()
-	local sS = gGlobalSyncTable.simonSays
-	local lang = smlua_text_utils_get_language()
-
-	if lang == "Spanish" then
-		if sS == 1 then
-			return "Salta!"
-		elseif sS == 2 then
-			return "Ataca!"
-		elseif sS == 3 then
-			return "No te muevas!"
-		elseif sS == 4 then
-			return "Camina!"
-		elseif sS == 5 then
-			return "Quémate en lava!"
-		elseif sS == 6 then
-			return "Agarra un borde!"
-		elseif sS == 7 then
-			return "Corre!"
-		elseif sS == 8 then
-			return "Haz un Backflip!"
-		end
-	elseif lang == "Portuguese" then
-		if sS == 1 then
-			return "Pule!"
-		elseif sS == 2 then
-			return "Ataque!"
-		elseif sS == 3 then
-			return "Não se mexa!"
-		elseif sS == 4 then
-			return "Ande!"
-		elseif sS == 5 then
-			return "Queime na lava!"
-		elseif sS == 6 then
-			return "Segure uma borda!"
-		elseif sS == 7 then
-			return "Corra!"
-		elseif sS == 8 then
-			return "Faça um Backflip!"
-		end
-	else
-		if sS == 1 then
-			return "Jump!"
-		elseif sS == 2 then
-			return "Attack!"
-		elseif sS == 3 then
-			return "Don't Move!"
-		elseif sS == 4 then
-			return "Walk!"
-		elseif sS == 5 then
-			return "Burn in lava!"
-		elseif sS == 6 then
-			return "Grab a ledge!"
-		elseif sS == 7 then
-			return "Run!"
-		elseif sS == 8 then
-			return "Do a Backflip!"
-		end
-	end
-end
-
 function get_hint(index)
 	local code = language or "en"
 	local hint_key = "hint_" .. tostring(index)

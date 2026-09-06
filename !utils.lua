@@ -1,5 +1,6 @@
 gGlobalSoundSource = { x = 0, y = 0, z = 0 }
 DEBUG_MODE = _G.cheatsApi -- allows solo testing, and also displays some things in console for Mingle and Glass Bridge
+local TRANSLATIONS = require("translations/translation-main")
 
 -- spawns an object but sets yaw, pitch, and roll to 0 (since it normally copies Mario's)
 function spawn_object_no_rotate(id, model, x, y, z, func, sync)
@@ -773,27 +774,27 @@ function toggle_spectator()
 	if sMario0.spectator then
 		duelLastAttacker = -1
 		eliminate_mario(gMarioStates[0])
-		djui_chat_message_create("\\#ffff50\\Entered spectator mode.")
+		djui_chat_message_create(translate("entered_spectator"))
 	else
 		if sMario0.team == nil or sMario0.team == 0 then
 			sMario0.team = calculate_lowest_member_team()
 		end
 
 		if skipCheck then
-			djui_chat_message_create("\\#ffff50\\Exited spectator mode.")
+			djui_chat_message_create(translate("exited_spectator"))
 		elseif
 			gGlobalSyncTable.eliminationMode
 			and (gGlobalSyncTable.gameMode ~= GAME_MODE_DUEL or not sMario0.validForDuel)
 		then
-			djui_chat_message_create("\\#ffff50\\You will exit spectator after this game.")
+			djui_chat_message_create(translate("exit_spectator_after_game"))
 		elseif gGlobalSyncTable.gameMode == GAME_MODE_DUEL and sMario0.validForDuel then
 			if gGlobalSyncTable.duelState == DUEL_STATE_ACTIVE then
-				djui_chat_message_create("\\#ffff50\\You will exit spectator after this round.")
+				djui_chat_message_create(translate("exit_spectator_after_round"))
 			else
-				djui_chat_message_create("\\#ffff50\\Exited spectator mode.")
+				djui_chat_message_create(translate("exited_spectator"))
 			end
 		else
-			djui_chat_message_create("\\#ffff50\\You will exit spectator after this minigame.")
+			djui_chat_message_create(translate("exit_spectator_after_minigame"))
 		end
 	end
 end

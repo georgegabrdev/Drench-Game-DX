@@ -106,7 +106,7 @@ function build_game_mode_menu(menu)
 					return
 				end
 				gGlobalSyncTable.selectedMode = i
-				djui_chat_message_create("Selected \\#ffff50\\" .. gData.name)
+				djui_chat_message_create(translate("selected") .. "\\#ffff50\\" .. gData.name)
 				inMenu = false
 			end,
 		})
@@ -305,7 +305,7 @@ menu_data = {
 					toggle_spectator()
 					inMenu = false
 				else
-					djui_chat_message_create("\\#ff5050\\WARNING: This will eliminate you! Press A again to continue.")
+					djui_chat_message_create(translate("spectate_warning"))
 					specTime = get_time()
 				end
 			end,
@@ -337,7 +337,7 @@ menu_data = {
 			currNum = gGlobalSyncTable.gameModeSelection,
 			maxNum = 3,
 			runOnChange = true,
-			nameRef = { "Choose", "In Order", "Random", "All" },
+			nameRef = { translate("choose"), translate("in_order"), translate("random"), translate("all") },
 			save = "gameModeSelection",
 		},
 		{
@@ -533,10 +533,10 @@ menu_data = {
 				if do_solo_debug() or duelers >= 2 then
 					gGlobalSyncTable.selectedMode = GAME_MODE_DUEL
 					gGlobalSyncTable.allDuel = false
-					djui_chat_message_create("Selected \\#ffff50\\Duel")
+					djui_chat_message_create("Selected \\#ffff50\\" .. translate("duel"))
 					inMenu = false
 				else
-					djui_chat_message_create("\\#ff5050\\Must have at least 2 duelers!")
+					djui_chat_message_create("\\#ff5050\\" .. translate("must_have_at_least_2_duelers"))
 				end
 			end,
 		},
@@ -545,59 +545,59 @@ menu_data = {
 			function()
 				gGlobalSyncTable.selectedMode = GAME_MODE_DUEL
 				gGlobalSyncTable.allDuel = true
-				djui_chat_message_create("Selected \\#ffff50\\Duel")
+				djui_chat_message_create(translate("selected") .. "\\#ffff50\\" .. translate("duel"))
 				inMenu = false
 			end,
 		},
 	},
 	[5] = {
 		{
-			"Toad Town",
+			translate("toad_town"),
 			function()
 				gGlobalSyncTable.gameLevelOverride = LEVEL_TOAD_TOWN
 				gGlobalSyncTable.selectedMode = menuSelectedMode
 				local gData = GAME_MODE_DATA[menuSelectedMode or 0]
-				djui_chat_message_create("Selected \\#ffff50\\" .. gData.name)
+				djui_chat_message_create(translate("selected") .. "\\#ffff50\\" .. gData.name)
 				inMenu = false
 			end,
 		},
 		{
-			"Koopa Keep",
+			translate("koopa_keep"),
 			function()
 				gGlobalSyncTable.gameLevelOverride = LEVEL_KOOPA_KEEP
 				gGlobalSyncTable.selectedMode = menuSelectedMode
 				local gData = GAME_MODE_DATA[menuSelectedMode or 0]
-				djui_chat_message_create("Selected \\#ffff50\\" .. gData.name)
+				djui_chat_message_create(translate("selected") .. "\\#ffff50\\" .. gData.name)
 				inMenu = false
 			end,
 		},
 		{
-			"DS Fort",
+			translate("ds_fort"),
 			function()
 				gGlobalSyncTable.gameLevelOverride = LEVEL_DS_FORT
 				gGlobalSyncTable.selectedMode = menuSelectedMode
 				local gData = GAME_MODE_DATA[menuSelectedMode or 0]
-				djui_chat_message_create("Selected \\#ffff50\\" .. gData.name)
+				djui_chat_message_create(translate("selected") .. "\\#ffff50\\" .. gData.name)
 				inMenu = false
 			end,
 		},
 		{
-			"Duel",
+			translate("duel"),
 			function()
 				gGlobalSyncTable.gameLevelOverride = LEVEL_DUEL
 				gGlobalSyncTable.selectedMode = menuSelectedMode
 				local gData = GAME_MODE_DATA[menuSelectedMode or 0]
-				djui_chat_message_create("Selected \\#ffff50\\" .. gData.name)
+				djui_chat_message_create(translate("selected") .. "\\#ffff50\\" .. gData.name)
 				inMenu = false
 			end,
 		},
 		{
-			"Random",
+			translate("random"),
 			function()
 				gGlobalSyncTable.gameLevelOverride = -1
 				gGlobalSyncTable.selectedMode = menuSelectedMode
 				local gData = GAME_MODE_DATA[menuSelectedMode or 0]
-				djui_chat_message_create("Selected \\#ffff50\\" .. gData.name)
+				djui_chat_message_create(translate("selected") .. "\\#ffff50\\" .. gData.name)
 				inMenu = false
 			end,
 		},
@@ -605,7 +605,7 @@ menu_data = {
 	[6] = { buildFunc = build_team_select_menu }, -- auto built
 	[7] = {
 		{
-			"Super Speed",
+			translate("super_speed"),
 			function(x)
 				toggle_modifier_by_bit(modifierBits.superSpeed, x ~= 0)
 			end,
@@ -614,14 +614,14 @@ menu_data = {
 			currNum = 0,
 			minNum = 0,
 			maxNum = 1,
-			nameRef = { "\\#ff5050\\Off", "\\#50ff50\\On" },
+			nameRef = { translate("off"), translate("on") },
 			updateNum = function(button)
 				button.currNum = is_modifier_active(modifierBits.superSpeed) and 1 or 0
 			end,
 		},
 
 		{
-			"High Gravity",
+			translate("high_gravity"),
 			function(x)
 				toggle_modifier_by_bit(modifierBits.highGravity, x ~= 0)
 			end,
@@ -630,14 +630,14 @@ menu_data = {
 			currNum = 0,
 			minNum = 0,
 			maxNum = 1,
-			nameRef = { "\\#ff5050\\Off", "\\#50ff50\\On" },
+			nameRef = { translate("off"), translate("on") },
 			updateNum = function(button)
 				button.currNum = is_modifier_active(modifierBits.highGravity) and 1 or 0
 			end,
 		},
 
 		{
-			"Low Gravity",
+			translate("low_gravity"),
 			function(x)
 				toggle_modifier_by_bit(modifierBits.lowGravity, x ~= 0)
 			end,
@@ -646,14 +646,14 @@ menu_data = {
 			currNum = 0,
 			minNum = 0,
 			maxNum = 1,
-			nameRef = { "\\#ff5050\\Off", "\\#50ff50\\On" },
+			nameRef = { translate("off"), translate("on") },
 			updateNum = function(button)
 				button.currNum = is_modifier_active(modifierBits.lowGravity) and 1 or 0
 			end,
 		},
 
 		{
-			"Inverted Controls",
+			translate("inverted_controls"),
 			function(x)
 				toggle_modifier_by_bit(modifierBits.invertedControls, x ~= 0)
 			end,
@@ -662,14 +662,14 @@ menu_data = {
 			currNum = 0,
 			minNum = 0,
 			maxNum = 1,
-			nameRef = { "\\#ff5050\\Off", "\\#50ff50\\On" },
+			nameRef = { translate("off"), translate("on") },
 			updateNum = function(button)
 				button.currNum = is_modifier_active(modifierBits.invertedControls) and 1 or 0
 			end,
 		},
 
 		{
-			"Instakill",
+			translate("instakill"),
 			function(x)
 				toggle_modifier_by_bit(modifierBits.instaKill, x ~= 0)
 			end,
@@ -678,14 +678,14 @@ menu_data = {
 			currNum = 0,
 			minNum = 0,
 			maxNum = 1,
-			nameRef = { "\\#ff5050\\Off", "\\#50ff50\\On" },
+			nameRef = { translate("off"), translate("on") },
 			updateNum = function(button)
 				button.currNum = is_modifier_active(modifierBits.instaKill) and 1 or 0
 			end,
 		},
 
 		{
-			"Z Button Challenge",
+			translate("z_button_challenge"),
 			function(x)
 				toggle_modifier_by_bit(modifierBits.ZBC, x ~= 0)
 			end,
@@ -694,14 +694,14 @@ menu_data = {
 			currNum = 0,
 			minNum = 0,
 			maxNum = 1,
-			nameRef = { "\\#ff5050\\Off", "\\#50ff50\\On" },
+			nameRef = { translate("off"), translate("on") },
 			updateNum = function(button)
 				button.currNum = is_modifier_active(modifierBits.ZBC) and 1 or 0
 			end,
 		},
 
 		{
-			"B Button Challenge",
+			translate("b_button_challenge"),
 			function(x)
 				toggle_modifier_by_bit(modifierBits.BBC, x ~= 0)
 			end,
@@ -710,7 +710,7 @@ menu_data = {
 			currNum = 0,
 			minNum = 0,
 			maxNum = 1,
-			nameRef = { "\\#ff5050\\Off", "\\#50ff50\\On" },
+			nameRef = { translate("off"), translate("on") },
 			updateNum = function(button)
 				button.currNum = is_modifier_active(modifierBits.BBC) and 1 or 0
 			end,
@@ -728,7 +728,7 @@ menu_data = {
 			currNum = 0,
 			minNum = 0,
 			maxNum = 2,
-			nameRef = { "\\#50ff50\\On", "\\#ff5050\\Off", "Mingle Only" },
+			nameRef = { translate("on"), translate("off"), translate("mingle_only") },
 			save = "disableMusic",
 			localSave = true,
 		},
@@ -775,17 +775,17 @@ menu_data = {
 	},
 	[9] = {
 		{
-			"Creator",
+			translate("creator"),
 			function() end,
 			desc = "Georgegabr1",
 		},
 		{
-			"Minigames",
+			translate("minigames"),
 			function() end,
-			desc = "Drench Game +",
+			desc = "Drench Game +\nDrench Game v1.2.2 (unofficial)",
 		},
 		{
-			"Ideas",
+			translate("ideas"),
 			function() end,
 			desc = "SCOPIC64",
 		},

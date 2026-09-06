@@ -1,4 +1,5 @@
 local HU = require("../hud-utils")
+local TRANSLATIONS = require("../translations/translation-main")
 
 local M = {}
 
@@ -11,11 +12,11 @@ end
 local function get_player_location(i)
 	local np = gNetworkPlayers[i]
 	if not np then
-		return "Unknown"
+		return translate("unknown")
 	end
 
 	local location = get_level_name(np.currCourseNum, np.currLevelNum, np.currAreaIndex)
-	return location or "Unknown"
+	return location or translate("unknown")
 end
 
 local function remove_color(text, get_color)
@@ -144,7 +145,7 @@ local function get_active_mods_list()
 		capped[i] = nonCSMods[i]
 	end
 
-	capped[MAX_MODS_DISPLAY + 1] = "\\#c8c8c8\\+" .. tostring(total - MAX_MODS_DISPLAY) .. " more"
+	capped[MAX_MODS_DISPLAY + 1] = "\\#c8c8c8\\+" .. tostring(total - MAX_MODS_DISPLAY) .. translate("more_suffix")
 
 	return capped, total
 end
@@ -152,13 +153,13 @@ end
 local function get_display_name(i)
 	local np = gNetworkPlayers[i]
 	if not np then
-		return "Unknown"
+		return translate("unknown")
 	end
 
-	local name = np.name or "Unknown"
+	local name = np.name or translate("unknown")
 
 	if name == "Player" then
-		name = "Player " .. i
+		name = translate("player_num") .. i
 	end
 
 	return name
@@ -346,14 +347,14 @@ function M.render_playerlist()
 		end
 
 		local playerCount = #activePlayers
-		local title = "Players:" .. " " .. playerCount .. "/" .. tostring(MAX_PLAYERS)
+		local title = translate("players_colon") .. " " .. playerCount .. "/" .. tostring(MAX_PLAYERS)
 
 		djui_hud_print_text_interpolated(title, x + 20, titleYPrev, 1, x + 20, titleYCurr, 1)
 		djui_hud_set_color(200, 255, 255, opacity)
-		djui_hud_print_text_interpolated("Name", x + 55, headerYPrev, 0.7, x + 55, headerYCurr, 0.7)
-		djui_hud_print_text_interpolated("Description", x + 250, headerYPrev, 0.7, x + 250, headerYCurr, 0.7)
+		djui_hud_print_text_interpolated(translate("name_header"), x + 55, headerYPrev, 0.7, x + 55, headerYCurr, 0.7)
+		djui_hud_print_text_interpolated(translate("description_header"), x + 250, headerYPrev, 0.7, x + 250, headerYCurr, 0.7)
 		djui_hud_print_text_interpolated(
-			"Location",
+			translate("location_header"),
 			x + width - 480,
 			headerYPrev,
 			0.7,
@@ -361,9 +362,9 @@ function M.render_playerlist()
 			headerYCurr,
 			0.7
 		)
-		djui_hud_print_text_interpolated("Ping", x + 350, headerYPrev, 0.7, x + 350, headerYCurr, 0.7)
+		djui_hud_print_text_interpolated(translate("ping_header"), x + 350, headerYPrev, 0.7, x + 350, headerYCurr, 0.7)
 		djui_hud_print_text_interpolated(
-			"Game Wins\nMinigame Wins",
+			translate("game_wins_header"),
 			x + width - 280,
 			headerYPrev - 15,
 			0.7,
@@ -387,7 +388,7 @@ function M.render_playerlist()
 
 		if gActiveMods and gActiveMods[1] then
 			djui_hud_set_color(200, 200, 200, opacity)
-			local footer = "[L] Mods"
+			local footer = translate("l_mods")
 			local fw = djui_hud_measure_text(footer) * 0.6
 			djui_hud_print_text_interpolated(
 				footer,
@@ -501,7 +502,7 @@ function M.render_playerlist()
 		end
 	else
 		djui_hud_set_color(255, 255, 255, opacity)
-		local modTitle = "Active Mods (" .. tostring(modsTotal) .. ")"
+		local modTitle = translate("active_mods") .. tostring(modsTotal) .. ")"
 
 		djui_hud_print_text_interpolated(modTitle, x + 20, titleYPrev, 1, x + 20, titleYCurr, 1)
 
@@ -521,7 +522,7 @@ function M.render_playerlist()
 		if #modsList == 0 then
 			djui_hud_set_color(200, 200, 200, opacity)
 
-			djui_hud_print_text_interpolated("No mods active", x + 20, yPrev + 65, 0.7, x + 20, yCurr + 65, 0.7)
+			djui_hud_print_text_interpolated(translate("no_mods_active"), x + 20, yPrev + 65, 0.7, x + 20, yCurr + 65, 0.7)
 		else
 			local rowYBasePrev = yPrev + 65
 			local rowYBaseCurr = yCurr + 65
@@ -555,7 +556,7 @@ function M.render_playerlist()
 		end
 
 		djui_hud_set_color(200, 200, 200, opacity)
-		local footer = "[L] Players"
+		local footer = translate("l_players")
 		local fw = djui_hud_measure_text(footer) * 0.6
 
 		djui_hud_print_text_interpolated(
