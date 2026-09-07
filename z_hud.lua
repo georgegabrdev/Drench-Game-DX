@@ -162,635 +162,635 @@ local function djui_hud_set_color_from_table(color, alpha)
 	djui_hud_set_color(color.r or 255, color.g or 255, color.b or 255, alpha or color.a or 255)
 end
 
+local language_changed = false
+
 -- menu data
-menu_data = {
-	[1] = {
-		{
-			translate("game_settings"),
-			function()
-				enter_menu(2)
-			end,
-			true,
-		},
-		{
-			translate("select_next_minigame"),
-			function()
-				enter_menu(3)
-			end,
-			true,
-			function()
-				return (
-					gGlobalSyncTable.gameState ~= GAME_STATE_LOBBY
-					and gGlobalSyncTable.gameState ~= GAME_STATE_SCORES
-				)
-					or (
-						gGlobalSyncTable.gameModeSelection ~= SELECT_MODE_CHOOSE
-						and (
-							gGlobalSyncTable.gameModeSelection ~= SELECT_MODE_ORDER
-							or gGlobalSyncTable.gameState ~= GAME_STATE_LOBBY
-						)
+local function create_menu_data()
+	return {
+		[1] = {
+			{
+				translate("game_settings"),
+				function()
+					enter_menu(2)
+				end,
+				true,
+			},
+			{
+				translate("select_next_minigame"),
+				function()
+					enter_menu(3)
+				end,
+				true,
+				function()
+					return (
+						gGlobalSyncTable.gameState ~= GAME_STATE_LOBBY
+						and gGlobalSyncTable.gameState ~= GAME_STATE_SCORES
 					)
-			end,
-		},
-		{
-			translate("modifiers"),
-			function()
-				enter_menu(7)
-			end,
-			true,
-		},
-		{
-			translate("force_start_game"),
-			function()
-				gGlobalSyncTable.forceStart = not gGlobalSyncTable.forceStart
-				if gGlobalSyncTable.forceStart then
-					local connectionsNeeded = 2
-					local validPlayers = 0
-					for_each_connected_player(function(index)
-						validPlayers = validPlayers + 1
-						if validPlayers >= connectionsNeeded then
-							return true
+						or (
+							gGlobalSyncTable.gameModeSelection ~= SELECT_MODE_CHOOSE
+							and (
+								gGlobalSyncTable.gameModeSelection ~= SELECT_MODE_ORDER
+								or gGlobalSyncTable.gameState ~= GAME_STATE_LOBBY
+							)
+						)
+				end,
+			},
+			{
+				translate("modifiers"),
+				function()
+					enter_menu(7)
+				end,
+				true,
+			},
+			{
+				translate("force_start_game"),
+				function()
+					gGlobalSyncTable.forceStart = not gGlobalSyncTable.forceStart
+					if gGlobalSyncTable.forceStart then
+						local connectionsNeeded = 2
+						local validPlayers = 0
+						for_each_connected_player(function(index)
+							validPlayers = validPlayers + 1
+							if validPlayers >= connectionsNeeded then
+								return true
+							end
+						end)
+						if validPlayers ~= 0 and (do_solo_debug() or validPlayers >= connectionsNeeded) then
+							djui_chat_message_create("\\#ffff50\\" .. translate("starting_the_game"))
+						else
+							djui_chat_message_create("\\#ff5050\\" .. translate("need_at_least_2_players"))
+							gGlobalSyncTable.forceStart = false
 						end
-					end)
-					if validPlayers ~= 0 and (do_solo_debug() or validPlayers >= connectionsNeeded) then
-						djui_chat_message_create("\\#ffff50\\" .. translate("starting_the_game"))
 					else
-						djui_chat_message_create("\\#ff5050\\" .. translate("need_at_least_2_players"))
-						gGlobalSyncTable.forceStart = false
+						djui_chat_message_create("\\#ff5050\\" .. translate("canceled_forced_start"))
 					end
-				else
-					djui_chat_message_create("\\#ff5050\\" .. translate("canceled_forced_start"))
-				end
-			end,
-			true,
-			function()
-				return (gGlobalSyncTable.gameState ~= GAME_STATE_LOBBY)
-			end,
+				end,
+				true,
+				function()
+					return (gGlobalSyncTable.gameState ~= GAME_STATE_LOBBY)
+				end,
+			},
+			{
+				translate("cancel_game"),
+				function()
+					if cancelTime >= get_time() - 5 then
+						gGlobalSyncTable.gameState = GAME_STATE_LOBBY
+						gGlobalSyncTable.gameTimer = 0
+						if gGlobalSyncTable.teamSelection == TEAM_SELECTION_RANDOM then
+							do_team_selection()
+						end
+						cancelTime = 0
+						inMenu = false
+					else
+						djui_chat_message_create("\\#ff5050\\" .. translate("are_you_sure"))
+						cancelTime = get_time()
+					end
+				end,
+				true,
+				function()
+					return (gGlobalSyncTable.gameState == GAME_STATE_LOBBY)
+				end,
+			},
+			{
+				translate("team"),
+				function(x)
+					gPlayerSyncTable[0].team = x
+				end,
+				false,
+				function()
+					return not (
+						gGlobalSyncTable.teamCount ~= 0
+						and gGlobalSyncTable.teamSelection == TEAM_SELECTION_PLAYER
+						and gGlobalSyncTable.gameState == GAME_STATE_LOBBY
+					)
+				end,
+				runOnChange = true,
+				updateNum = function(button)
+					button.maxNum = gGlobalSyncTable.teamCount or 0
+					local team = gPlayerSyncTable[0].team or 0
+					if team <= button.maxNum then
+						button.currNum = team
+					else
+						button.currNum = 0
+					end
+				end,
+				currNum = 0,
+				minNum = 0,
+				maxNum = 0,
+				nameRef = teamNameRef,
+			},
+			{
+				translate("open_cs_menu"),
+				function()
+					charSelect.set_menu_open(true)
+					inMenu = false
+				end,
+				false,
+				function()
+					return not charSelectExists
+				end,
+			},
+			{
+				translate("personal_settings"),
+				function()
+					enter_menu(8)
+				end,
+				true,
+			},
+			{
+				translate("spectate_text"),
+				function()
+					local sMario0 = gPlayerSyncTable[0]
+					local skipCheck = gGlobalSyncTable.gameState == GAME_STATE_LOBBY
+						or (gGlobalSyncTable.gameState ~= GAME_STATE_ACTIVE and not gGlobalSyncTable.eliminationMode)
+					if sMario0.spectator or skipCheck or specTime >= get_time() - 5 then
+						specTime = 0
+						toggle_spectator()
+						inMenu = false
+					else
+						djui_chat_message_create(translate("spectate_warning"))
+						specTime = get_time()
+					end
+				end,
+				false,
+			},
+			{
+				translate("exit_menu"),
+				function()
+					inMenu = false
+				end,
+				false,
+			},
+			{
+				translate("coopdx_menu"),
+				function()
+					djui_open_pause_menu()
+				end,
+				false,
+			},
 		},
-		{
-			translate("cancel_game"),
-			function()
-				if cancelTime >= get_time() - 5 then
-					gGlobalSyncTable.gameState = GAME_STATE_LOBBY
-					gGlobalSyncTable.gameTimer = 0
-					if gGlobalSyncTable.teamSelection == TEAM_SELECTION_RANDOM then
+		[2] = {
+			{
+				translate("game_mode_selection"),
+				function(x)
+					gGlobalSyncTable.gameModeSelection = x
+					gGlobalSyncTable.selectedMode = -1
+				end,
+				minNum = 0,
+				currNum = gGlobalSyncTable.gameModeSelection,
+				maxNum = 3,
+				runOnChange = true,
+				nameRef = { translate("choose"), translate("in_order"), translate("random"), translate("all") },
+				save = "gameModeSelection",
+			},
+			{
+				translate("include_all_player_duel"),
+				function(x)
+					gGlobalSyncTable.includeAllDuel = (x == 1)
+				end,
+				true,
+				function()
+					return (
+						gGlobalSyncTable.gameModeSelection == SELECT_MODE_CHOOSE or gGlobalSyncTable.eliminationMode
+					)
+				end,
+				currNum = (gGlobalSyncTable.includeAllDuel and 1) or 0,
+				minNum = 0,
+				maxNum = 1,
+				runOnChange = true,
+				nameRef = { translate("off"), translate("on") },
+				save = "includeAllDuel",
+			},
+			{
+				translate("total_minigames"),
+				function(x)
+					gGlobalSyncTable.maxMiniGames = x
+				end,
+				true,
+				function()
+					return gGlobalSyncTable.gameModeSelection == SELECT_MODE_ALL
+				end,
+				currNum = gGlobalSyncTable.maxMiniGames,
+				maxNum = 99,
+				runOnChange = true,
+				save = "maxMiniGames",
+			},
+			{
+				translate("final_duel"),
+				function(x)
+					gGlobalSyncTable.finalDuel = (x == 1)
+				end,
+				true,
+				function()
+					return (
+						gGlobalSyncTable.gameModeSelection ~= SELECT_MODE_ALL and gGlobalSyncTable.maxMiniGames <= 1
+					) or (gGlobalSyncTable.teamCount == 2 and not gGlobalSyncTable.eliminationMode)
+				end,
+				currNum = (gGlobalSyncTable.finalDuel and 1) or 0,
+				minNum = 0,
+				maxNum = 1,
+				runOnChange = true,
+				nameRef = { translate("off"), translate("on") },
+				save = "finalDuel",
+			},
+			{
+				translate("elimination_mode"),
+				function(x)
+					gGlobalSyncTable.eliminationMode = (x == 1)
+				end,
+				currNum = (gGlobalSyncTable.eliminationMode and 1) or 0,
+				minNum = 0,
+				maxNum = 1,
+				runOnChange = true,
+				nameRef = { translate("off"), translate("on") },
+				save = "eliminationMode",
+			},
+			{
+				translate("percent_ready_to_start"),
+				function(x)
+					gGlobalSyncTable.percentToStart = x
+				end,
+				true,
+				currNum = gGlobalSyncTable.percentToStart,
+				minNum = 0,
+				maxNum = 100,
+				runOnChange = true,
+				save = "percentToStart",
+			},
+			{
+				translate("teams"),
+				function(x)
+					gGlobalSyncTable.teamCount = x
+					if x == 0 then
+						for i = 0, MAX_PLAYERS - 1 do
+							gPlayerSyncTable[i].team = 0
+						end
+					else
 						do_team_selection()
 					end
-					cancelTime = 0
-					inMenu = false
-				else
-					djui_chat_message_create("\\#ff5050\\" .. translate("are_you_sure"))
-					cancelTime = get_time()
-				end
-			end,
-			true,
-			function()
-				return (gGlobalSyncTable.gameState == GAME_STATE_LOBBY)
-			end,
-		},
-		{
-			translate("team"),
-			function(x)
-				gPlayerSyncTable[0].team = x
-			end,
-			false,
-			function()
-				return not (
-					gGlobalSyncTable.teamCount ~= 0
-					and gGlobalSyncTable.teamSelection == TEAM_SELECTION_PLAYER
-					and gGlobalSyncTable.gameState == GAME_STATE_LOBBY
-				)
-			end,
-			runOnChange = true,
-			updateNum = function(button)
-				button.maxNum = gGlobalSyncTable.teamCount or 0
-				local team = gPlayerSyncTable[0].team or 0
-				if team <= button.maxNum then
-					button.currNum = team
-				else
-					button.currNum = 0
-				end
-			end,
-			currNum = 0,
-			minNum = 0,
-			maxNum = 0,
-			nameRef = teamNameRef,
-		},
-		{
-			translate("open_cs_menu"),
-			function()
-				charSelect.set_menu_open(true)
-				inMenu = false
-			end,
-			false,
-			function()
-				return not charSelectExists
-			end,
-		},
-		{
-			translate("personal_settings"),
-			function()
-				enter_menu(8)
-			end,
-			true,
-		},
-		{
-			translate("spectate_text"),
-			function()
-				local sMario0 = gPlayerSyncTable[0]
-				local skipCheck = gGlobalSyncTable.gameState == GAME_STATE_LOBBY
-					or (gGlobalSyncTable.gameState ~= GAME_STATE_ACTIVE and not gGlobalSyncTable.eliminationMode)
-				if sMario0.spectator or skipCheck or specTime >= get_time() - 5 then
-					specTime = 0
-					toggle_spectator()
-					inMenu = false
-				else
-					djui_chat_message_create(translate("spectate_warning"))
-					specTime = get_time()
-				end
-			end,
-			false,
-		},
-		{
-			translate("exit_menu"),
-			function()
-				inMenu = false
-			end,
-			false,
-		},
-		{
-			translate("coopdx_menu"),
-			function()
-				djui_open_pause_menu()
-			end,
-			false,
-		},
-	},
-	[2] = {
-		{
-			translate("game_mode_selection"),
-			function(x)
-				gGlobalSyncTable.gameModeSelection = x
-				gGlobalSyncTable.selectedMode = -1
-			end,
-			minNum = 0,
-			currNum = gGlobalSyncTable.gameModeSelection,
-			maxNum = 3,
-			runOnChange = true,
-			nameRef = { translate("choose"), translate("in_order"), translate("random"), translate("all") },
-			save = "gameModeSelection",
-		},
-		{
-			translate("include_all_player_duel"),
-			function(x)
-				gGlobalSyncTable.includeAllDuel = (x == 1)
-			end,
-			true,
-			function()
-				return (gGlobalSyncTable.gameModeSelection == SELECT_MODE_CHOOSE or gGlobalSyncTable.eliminationMode)
-			end,
-			currNum = (gGlobalSyncTable.includeAllDuel and 1) or 0,
-			minNum = 0,
-			maxNum = 1,
-			runOnChange = true,
-			nameRef = { translate("off"), translate("on") },
-			save = "includeAllDuel",
-		},
-		{
-			translate("total_minigames"),
-			function(x)
-				gGlobalSyncTable.maxMiniGames = x
-			end,
-			true,
-			function()
-				return gGlobalSyncTable.gameModeSelection == SELECT_MODE_ALL
-			end,
-			currNum = gGlobalSyncTable.maxMiniGames,
-			maxNum = 99,
-			runOnChange = true,
-			save = "maxMiniGames",
-		},
-		{
-			translate("final_duel"),
-			function(x)
-				gGlobalSyncTable.finalDuel = (x == 1)
-			end,
-			true,
-			function()
-				return (gGlobalSyncTable.gameModeSelection ~= SELECT_MODE_ALL and gGlobalSyncTable.maxMiniGames <= 1)
-					or (gGlobalSyncTable.teamCount == 2 and not gGlobalSyncTable.eliminationMode)
-			end,
-			currNum = (gGlobalSyncTable.finalDuel and 1) or 0,
-			minNum = 0,
-			maxNum = 1,
-			runOnChange = true,
-			nameRef = { translate("off"), translate("on") },
-			save = "finalDuel",
-		},
-		{
-			translate("elimination_mode"),
-			function(x)
-				gGlobalSyncTable.eliminationMode = (x == 1)
-			end,
-			currNum = (gGlobalSyncTable.eliminationMode and 1) or 0,
-			minNum = 0,
-			maxNum = 1,
-			runOnChange = true,
-			nameRef = { translate("off"), translate("on") },
-			save = "eliminationMode",
-		},
-		{
-			translate("percent_ready_to_start"),
-			function(x)
-				gGlobalSyncTable.percentToStart = x
-			end,
-			true,
-			currNum = gGlobalSyncTable.percentToStart,
-			minNum = 0,
-			maxNum = 100,
-			runOnChange = true,
-			save = "percentToStart",
-		},
-		{
-			translate("teams"),
-			function(x)
-				gGlobalSyncTable.teamCount = x
-				if x == 0 then
-					for i = 0, MAX_PLAYERS - 1 do
-						gPlayerSyncTable[i].team = 0
-					end
-				else
-					do_team_selection()
-				end
-			end,
-			true,
-			currNum = gGlobalSyncTable.teamCount,
-			minNum = 0,
-			maxNum = 8,
-			excludeNum = 1,
-			runOnChange = true,
-			nameRef = { translate("off") },
-			save = "teamCount",
-		},
-		{
-			translate("team_selection"),
-			function(x)
-				gGlobalSyncTable.teamSelection = x
-				if x == TEAM_SELECTION_RANDOM then
-					do_team_selection()
-				end
-			end,
-			true,
-			function()
-				return gGlobalSyncTable.teamCount == 0
-			end,
-			currNum = gGlobalSyncTable.teamSelection,
-			minNum = 0,
-			maxNum = 2,
-			runOnChange = true,
-			nameRef = { translate("random_teams"), translate("hosts_choice"), translate("players_choice") },
-			save = "teamSelection",
-		},
-		{
-			translate("select_teams"),
-			function()
-				enter_menu(6)
-			end,
-			true,
-			function()
-				return gGlobalSyncTable.teamSelection ~= TEAM_SELECTION_HOST or gGlobalSyncTable.teamCount == 0
-			end,
-		},
-	},
-	[3] = { buildFunc = build_game_mode_menu }, -- auto built
-	[4] = {
-		{
-			translate("total_duelers"),
-			function(x)
-				local secondToLastOption = menu_data[4][#menu_data[4] - 1]
-				local lastOption = menu_data[4][#menu_data[4]]
-				for i = 1, x do
-					menu_data[4][i + 1] = {
-						"Dueler " .. i,
-						function()
-							-- do nothing
-						end,
-						playerRef = true,
-						currNum = (menu_data[4][i + 1] and get_menu_option(4, i + 1)) or 0,
-						minNum = 0,
-						maxNum = MAX_PLAYERS - 1,
-					}
-				end
-				if #menu_data[4] > x + 1 then
-					for i = x + 2, #menu_data[4] do
-						menu_data[4][i] = nil
-					end
-				end
-				table.insert(menu_data[4], secondToLastOption)
-				table.insert(menu_data[4], lastOption)
-			end,
-			currNum = 2,
-			minNum = 2,
-			maxNum = MAX_PLAYERS,
-			runOnChange = true,
-		},
-		{
-			"Dueler 1",
-			function()
-				-- do nothing
-			end,
-			playerRef = true,
-			currNum = 0,
-			minNum = 0,
-			maxNum = MAX_PLAYERS - 1,
-		},
-		{
-			"Dueler 2",
-			function()
-				-- do nothing
-			end,
-			playerRef = true,
-			currNum = 0,
-			minNum = 0,
-			maxNum = MAX_PLAYERS - 1,
-		},
-		{
-			"\\#50ff50\\" .. translate("confirm_duelers"),
-			function()
-				for i = 0, MAX_PLAYERS - 1 do
-					local sMario = gPlayerSyncTable[i]
-					sMario.validForDuel = false
-				end
-				local duelers = 0
-				for i = 2, #menu_data[4] - 2 do
-					local index = get_menu_option(4, i)
-					local sMario = gPlayerSyncTable[index]
-					if not sMario.validForDuel then
-						duelers = duelers + 1
-						sMario.validForDuel = true
-					end
-				end
-				if do_solo_debug() or duelers >= 2 then
-					gGlobalSyncTable.selectedMode = GAME_MODE_DUEL
-					gGlobalSyncTable.allDuel = false
-					djui_chat_message_create("Selected \\#ffff50\\" .. translate("duel"))
-					inMenu = false
-				else
-					djui_chat_message_create("\\#ff5050\\" .. translate("must_have_at_least_2_duelers"))
-				end
-			end,
-		},
-		{
-			"\\#ffff50\\" .. translate("all_player_duel"),
-			function()
-				gGlobalSyncTable.selectedMode = GAME_MODE_DUEL
-				gGlobalSyncTable.allDuel = true
-				djui_chat_message_create(translate("selected") .. "\\#ffff50\\" .. translate("duel"))
-				inMenu = false
-			end,
-		},
-	},
-	[5] = {
-		{
-			translate("toad_town"),
-			function()
-				gGlobalSyncTable.gameLevelOverride = LEVEL_TOAD_TOWN
-				gGlobalSyncTable.selectedMode = menuSelectedMode
-				local gData = GAME_MODE_DATA[menuSelectedMode or 0]
-				djui_chat_message_create(translate("selected") .. "\\#ffff50\\" .. gData.name)
-				inMenu = false
-			end,
-		},
-		{
-			translate("koopa_keep"),
-			function()
-				gGlobalSyncTable.gameLevelOverride = LEVEL_KOOPA_KEEP
-				gGlobalSyncTable.selectedMode = menuSelectedMode
-				local gData = GAME_MODE_DATA[menuSelectedMode or 0]
-				djui_chat_message_create(translate("selected") .. "\\#ffff50\\" .. gData.name)
-				inMenu = false
-			end,
-		},
-		{
-			translate("ds_fort"),
-			function()
-				gGlobalSyncTable.gameLevelOverride = LEVEL_DS_FORT
-				gGlobalSyncTable.selectedMode = menuSelectedMode
-				local gData = GAME_MODE_DATA[menuSelectedMode or 0]
-				djui_chat_message_create(translate("selected") .. "\\#ffff50\\" .. gData.name)
-				inMenu = false
-			end,
-		},
-		{
-			translate("duel"),
-			function()
-				gGlobalSyncTable.gameLevelOverride = LEVEL_DUEL
-				gGlobalSyncTable.selectedMode = menuSelectedMode
-				local gData = GAME_MODE_DATA[menuSelectedMode or 0]
-				djui_chat_message_create(translate("selected") .. "\\#ffff50\\" .. gData.name)
-				inMenu = false
-			end,
-		},
-		{
-			translate("random"),
-			function()
-				gGlobalSyncTable.gameLevelOverride = -1
-				gGlobalSyncTable.selectedMode = menuSelectedMode
-				local gData = GAME_MODE_DATA[menuSelectedMode or 0]
-				djui_chat_message_create(translate("selected") .. "\\#ffff50\\" .. gData.name)
-				inMenu = false
-			end,
-		},
-	},
-	[6] = { buildFunc = build_team_select_menu }, -- auto built
-	[7] = {
-		{
-			translate("super_speed"),
-			function(x)
-				toggle_modifier_by_bit(modifierBits.superSpeed, x ~= 0)
-			end,
-			false,
-			runOnChange = true,
-			currNum = 0,
-			minNum = 0,
-			maxNum = 1,
-			nameRef = { translate("off"), translate("on") },
-			updateNum = function(button)
-				button.currNum = is_modifier_active(modifierBits.superSpeed) and 1 or 0
-			end,
-		},
-
-		{
-			translate("high_gravity"),
-			function(x)
-				toggle_modifier_by_bit(modifierBits.highGravity, x ~= 0)
-			end,
-			false,
-			runOnChange = true,
-			currNum = 0,
-			minNum = 0,
-			maxNum = 1,
-			nameRef = { translate("off"), translate("on") },
-			updateNum = function(button)
-				button.currNum = is_modifier_active(modifierBits.highGravity) and 1 or 0
-			end,
-		},
-
-		{
-			translate("low_gravity"),
-			function(x)
-				toggle_modifier_by_bit(modifierBits.lowGravity, x ~= 0)
-			end,
-			false,
-			runOnChange = true,
-			currNum = 0,
-			minNum = 0,
-			maxNum = 1,
-			nameRef = { translate("off"), translate("on") },
-			updateNum = function(button)
-				button.currNum = is_modifier_active(modifierBits.lowGravity) and 1 or 0
-			end,
-		},
-
-		{
-			translate("inverted_controls"),
-			function(x)
-				toggle_modifier_by_bit(modifierBits.invertedControls, x ~= 0)
-			end,
-			false,
-			runOnChange = true,
-			currNum = 0,
-			minNum = 0,
-			maxNum = 1,
-			nameRef = { translate("off"), translate("on") },
-			updateNum = function(button)
-				button.currNum = is_modifier_active(modifierBits.invertedControls) and 1 or 0
-			end,
-		},
-
-		{
-			translate("instakill"),
-			function(x)
-				toggle_modifier_by_bit(modifierBits.instaKill, x ~= 0)
-			end,
-			false,
-			runOnChange = true,
-			currNum = 0,
-			minNum = 0,
-			maxNum = 1,
-			nameRef = { translate("off"), translate("on") },
-			updateNum = function(button)
-				button.currNum = is_modifier_active(modifierBits.instaKill) and 1 or 0
-			end,
-		},
-
-		{
-			translate("z_button_challenge"),
-			function(x)
-				toggle_modifier_by_bit(modifierBits.ZBC, x ~= 0)
-			end,
-			false,
-			runOnChange = true,
-			currNum = 0,
-			minNum = 0,
-			maxNum = 1,
-			nameRef = { translate("off"), translate("on") },
-			updateNum = function(button)
-				button.currNum = is_modifier_active(modifierBits.ZBC) and 1 or 0
-			end,
-		},
-
-		{
-			translate("b_button_challenge"),
-			function(x)
-				toggle_modifier_by_bit(modifierBits.BBC, x ~= 0)
-			end,
-			false,
-			runOnChange = true,
-			currNum = 0,
-			minNum = 0,
-			maxNum = 1,
-			nameRef = { translate("off"), translate("on") },
-			updateNum = function(button)
-				button.currNum = is_modifier_active(modifierBits.BBC) and 1 or 0
-			end,
-		},
-	},
-
-	[8] = {
-		{
-			translate("music_text"),
-			function(x)
-				disableMusic = x
-			end,
-			false,
-			runOnChange = true,
-			currNum = 0,
-			minNum = 0,
-			maxNum = 2,
-			nameRef = { translate("on"), translate("off"), translate("mingle_only") },
-			save = "disableMusic",
-			localSave = true,
-		},
-		{
-			translate("colorblind_text"),
-			function(x)
-				showColorNames = (x ~= 0)
-			end,
-			false,
-			runOnChange = true,
-			currNum = 0,
-			minNum = 0,
-			maxNum = 1,
-			nameRef = { "\\#ff5050\\Off", "\\#50ff50\\On" },
-			save = "showColorNames",
-			localSave = true,
-		},
-		{
-			translate("language_text"),
-			function(x)
-				local languages = {
-					"en",
-					"es",
-					"pt-br",
-					"fr",
-				}
-
-				language = languages[x + 1]
-			end,
-			false,
-			runOnChange = true,
-			currNum = 0,
-			minNum = 0,
-			maxNum = 3,
-			nameRef = {
-				"English",
-				"Español",
-				"Português",
-				"Français",
+				end,
+				true,
+				currNum = gGlobalSyncTable.teamCount,
+				minNum = 0,
+				maxNum = 8,
+				excludeNum = 1,
+				runOnChange = true,
+				nameRef = { translate("off") },
+				save = "teamCount",
 			},
-			save = "language",
-			localSave = true,
+			{
+				translate("team_selection"),
+				function(x)
+					gGlobalSyncTable.teamSelection = x
+					if x == TEAM_SELECTION_RANDOM then
+						do_team_selection()
+					end
+				end,
+				true,
+				function()
+					return gGlobalSyncTable.teamCount == 0
+				end,
+				currNum = gGlobalSyncTable.teamSelection,
+				minNum = 0,
+				maxNum = 2,
+				runOnChange = true,
+				nameRef = { translate("random_teams"), translate("hosts_choice"), translate("players_choice") },
+				save = "teamSelection",
+			},
+			{
+				translate("select_teams"),
+				function()
+					enter_menu(6)
+				end,
+				true,
+				function()
+					return gGlobalSyncTable.teamSelection ~= TEAM_SELECTION_HOST or gGlobalSyncTable.teamCount == 0
+				end,
+			},
 		},
-	},
-	[9] = {
-		{
-			translate("creator"),
-			function() end,
-			desc = "Georgegabr1",
+		[3] = { buildFunc = build_game_mode_menu }, -- auto built
+		[4] = {
+			{
+				translate("total_duelers"),
+				function(x)
+					local secondToLastOption = menu_data[4][#menu_data[4] - 1]
+					local lastOption = menu_data[4][#menu_data[4]]
+					for i = 1, x do
+						menu_data[4][i + 1] = {
+							"Dueler " .. i,
+							function()
+								-- do nothing
+							end,
+							playerRef = true,
+							currNum = (menu_data[4][i + 1] and get_menu_option(4, i + 1)) or 0,
+							minNum = 0,
+							maxNum = MAX_PLAYERS - 1,
+						}
+					end
+					if #menu_data[4] > x + 1 then
+						for i = x + 2, #menu_data[4] do
+							menu_data[4][i] = nil
+						end
+					end
+					table.insert(menu_data[4], secondToLastOption)
+					table.insert(menu_data[4], lastOption)
+				end,
+				currNum = 2,
+				minNum = 2,
+				maxNum = MAX_PLAYERS,
+				runOnChange = true,
+			},
+			{
+				"Dueler 1",
+				function()
+					-- do nothing
+				end,
+				playerRef = true,
+				currNum = 0,
+				minNum = 0,
+				maxNum = MAX_PLAYERS - 1,
+			},
+			{
+				"Dueler 2",
+				function()
+					-- do nothing
+				end,
+				playerRef = true,
+				currNum = 0,
+				minNum = 0,
+				maxNum = MAX_PLAYERS - 1,
+			},
+			{
+				"\\#50ff50\\" .. translate("confirm_duelers"),
+				function()
+					for i = 0, MAX_PLAYERS - 1 do
+						local sMario = gPlayerSyncTable[i]
+						sMario.validForDuel = false
+					end
+					local duelers = 0
+					for i = 2, #menu_data[4] - 2 do
+						local index = get_menu_option(4, i)
+						local sMario = gPlayerSyncTable[index]
+						if not sMario.validForDuel then
+							duelers = duelers + 1
+							sMario.validForDuel = true
+						end
+					end
+					if do_solo_debug() or duelers >= 2 then
+						gGlobalSyncTable.selectedMode = GAME_MODE_DUEL
+						gGlobalSyncTable.allDuel = false
+						djui_chat_message_create("Selected \\#ffff50\\" .. translate("duel"))
+						inMenu = false
+					else
+						djui_chat_message_create("\\#ff5050\\" .. translate("must_have_at_least_2_duelers"))
+					end
+				end,
+			},
+			{
+				"\\#ffff50\\" .. translate("all_player_duel"),
+				function()
+					gGlobalSyncTable.selectedMode = GAME_MODE_DUEL
+					gGlobalSyncTable.allDuel = true
+					djui_chat_message_create(translate("selected") .. "\\#ffff50\\" .. translate("duel"))
+					inMenu = false
+				end,
+			},
 		},
-		{
-			translate("minigames"),
-			function() end,
-			desc = "Drench Game +\nDrench Game v1.2.2 (unofficial)",
+		[5] = { buildFunc = build_map_menu },
+		[6] = { buildFunc = build_team_select_menu }, -- auto built
+		[7] = {
+			{
+				translate("super_speed"),
+				function(x)
+					toggle_modifier_by_bit(modifierBits.superSpeed, x ~= 0)
+				end,
+				false,
+				runOnChange = true,
+				currNum = 0,
+				minNum = 0,
+				maxNum = 1,
+				nameRef = { translate("off"), translate("on") },
+				updateNum = function(button)
+					button.currNum = is_modifier_active(modifierBits.superSpeed) and 1 or 0
+				end,
+			},
+
+			{
+				translate("high_gravity"),
+				function(x)
+					toggle_modifier_by_bit(modifierBits.highGravity, x ~= 0)
+				end,
+				false,
+				runOnChange = true,
+				currNum = 0,
+				minNum = 0,
+				maxNum = 1,
+				nameRef = { translate("off"), translate("on") },
+				updateNum = function(button)
+					button.currNum = is_modifier_active(modifierBits.highGravity) and 1 or 0
+				end,
+			},
+
+			{
+				translate("low_gravity"),
+				function(x)
+					toggle_modifier_by_bit(modifierBits.lowGravity, x ~= 0)
+				end,
+				false,
+				runOnChange = true,
+				currNum = 0,
+				minNum = 0,
+				maxNum = 1,
+				nameRef = { translate("off"), translate("on") },
+				updateNum = function(button)
+					button.currNum = is_modifier_active(modifierBits.lowGravity) and 1 or 0
+				end,
+			},
+
+			{
+				translate("inverted_controls"),
+				function(x)
+					toggle_modifier_by_bit(modifierBits.invertedControls, x ~= 0)
+				end,
+				false,
+				runOnChange = true,
+				currNum = 0,
+				minNum = 0,
+				maxNum = 1,
+				nameRef = { translate("off"), translate("on") },
+				updateNum = function(button)
+					button.currNum = is_modifier_active(modifierBits.invertedControls) and 1 or 0
+				end,
+			},
+
+			{
+				translate("instakill"),
+				function(x)
+					toggle_modifier_by_bit(modifierBits.instaKill, x ~= 0)
+				end,
+				false,
+				runOnChange = true,
+				currNum = 0,
+				minNum = 0,
+				maxNum = 1,
+				nameRef = { translate("off"), translate("on") },
+				updateNum = function(button)
+					button.currNum = is_modifier_active(modifierBits.instaKill) and 1 or 0
+				end,
+			},
+
+			{
+				translate("z_button_challenge"),
+				function(x)
+					toggle_modifier_by_bit(modifierBits.ZBC, x ~= 0)
+				end,
+				false,
+				runOnChange = true,
+				currNum = 0,
+				minNum = 0,
+				maxNum = 1,
+				nameRef = { translate("off"), translate("on") },
+				updateNum = function(button)
+					button.currNum = is_modifier_active(modifierBits.ZBC) and 1 or 0
+				end,
+			},
+
+			{
+				translate("b_button_challenge"),
+				function(x)
+					toggle_modifier_by_bit(modifierBits.BBC, x ~= 0)
+				end,
+				false,
+				runOnChange = true,
+				currNum = 0,
+				minNum = 0,
+				maxNum = 1,
+				nameRef = { translate("off"), translate("on") },
+				updateNum = function(button)
+					button.currNum = is_modifier_active(modifierBits.BBC) and 1 or 0
+				end,
+			},
 		},
-		{
-			translate("ideas"),
-			function() end,
-			desc = "SCOPIC64",
+
+		[8] = {
+			{
+				translate("music_text"),
+				function(x)
+					disableMusic = x
+				end,
+				false,
+				runOnChange = true,
+				currNum = 0,
+				minNum = 0,
+				maxNum = 2,
+				nameRef = { translate("on"), translate("off"), translate("mingle_only") },
+				save = "disableMusic",
+				localSave = true,
+			},
+			{
+				translate("colorblind_text"),
+				function(x)
+					showColorNames = (x ~= 0)
+				end,
+				false,
+				runOnChange = true,
+				currNum = 0,
+				minNum = 0,
+				maxNum = 1,
+				nameRef = { "\\#ff5050\\Off", "\\#50ff50\\On" },
+				save = "showColorNames",
+				localSave = true,
+			},
+			{
+				translate("language_text"),
+				function(x)
+					local languages = {
+						"en",
+						"es",
+						"pt-br",
+						"fr",
+					}
+
+					language = languages[x + 1]
+					language_changed = true
+				end,
+				false,
+				runOnChange = true,
+				currNum = language == "es" and 1 or language == "pt-br" and 2 or language == "fr" and 3 or 0,
+				minNum = 0,
+				maxNum = 3,
+				nameRef = {
+					"English",
+					"Español",
+					"Português",
+					"Français",
+				},
+				save = "language",
+				localSave = true,
+			},
 		},
-	},
+		[9] = {
+			{
+				translate("creator"),
+				function() end,
+				desc = "Georgegabr1",
+			},
+			{
+				translate("minigames"),
+				function() end,
+				desc = "Drench Game +\nDrench Game v1.2.2 (unofficial)",
+			},
+			{
+				translate("ideas"),
+				function() end,
+				desc = "SCOPIC64",
+			},
+		},
+	}
+end
+
+local savedLanguage = mod_storage_load("language")
+
+if savedLanguage == "en" or savedLanguage == "es" or savedLanguage == "pt-br" or savedLanguage == "fr" then
+	language = savedLanguage
+end
+
+menu_data = create_menu_data()
+local gameMapList = {}
+
+local levelKeys = {
+	[LEVEL_TOAD_TOWN] = "toad_town",
+	[LEVEL_KOOPA_KEEP] = "koopa_keep",
+	[LEVEL_DS_FORT] = "ds_fort",
+	[LEVEL_DUEL] = "duel",
 }
+
+function build_map_menu(menu)
+	for i, level in ipairs(gameMapList) do
+		local levelName = translate(levelKeys[level] or "unknown")
+		table.insert(menu, {
+			levelName,
+			function()
+				gGlobalSyncTable.gameLevelOverride = level
+				gGlobalSyncTable.selectedMode = menuSelectedMode
+				local gData = GAME_MODE_DATA[menuSelectedMode or 0]
+				djui_chat_message_create("Selected \\#ffff50\\" .. gData.name)
+				inMenu = false
+			end,
+		})
+	end
+
+	table.insert(menu, {
+		"Random",
+		function()
+			gGlobalSyncTable.gameLevelOverride = -1
+			gGlobalSyncTable.selectedMode = menuSelectedMode
+			local gData = GAME_MODE_DATA[menuSelectedMode or 0]
+			djui_chat_message_create("Selected \\#ffff50\\" .. gData.name)
+			inMenu = false
+		end,
+	})
+end
 
 local TEX_DRENCH = get_texture_info("drench_icon")
 
@@ -1150,6 +1150,17 @@ function menu_controls(m)
 		else
 			play_sound(SOUND_MENU_CLICK_FILE_SELECT, m.marioObj.header.gfx.cameraToObject)
 			button[2](button.currNum, button)
+			if language_changed then
+				language_changed = false
+
+				local oldMenuID = menuID
+				local oldMenuOption = menuOption
+
+				menu_data = create_menu_data()
+
+				menuID = oldMenuID
+				menuOption = oldMenuOption
+			end
 		end
 	elseif (sMenuInputsPressed & B_BUTTON) ~= 0 then
 		if #menu_history ~= 0 then
@@ -1213,8 +1224,24 @@ function menu_controls(m)
 		stickCooldownX = 5
 		if button.runOnChange and button[2] then
 			button[2](button.currNum, button)
+
+			if language_changed then
+				language_changed = false
+				local oldMenuID = menuID
+				local oldMenuOption = menuOption
+
+				menu_data = create_menu_data()
+
+				menuID = oldMenuID
+				menuOption = oldMenuOption
+			end
+
 			if (network_is_server() or button.localSave) and button.save then
-				mod_storage_save(button.save, tostring(button.currNum))
+				if button.save == "language" then
+					mod_storage_save("language", language)
+				else
+					mod_storage_save(button.save, tostring(button.currNum))
+				end
 			end
 		end
 	end
@@ -1372,17 +1399,34 @@ end
 -- Load saved menu settings on startup
 for a, menu in ipairs(menu_data) do
 	for b, button in ipairs(menu) do
-		if (network_is_server() or button.localSave) and button.save then
-			local value = tonumber(mod_storage_load(button.save))
-			local min = button.minNum or 0
-			local max = button.maxNum or 999
-			if value and value % 1 == 0 and button.currNum and value >= min and value <= max then
-				button[2](value, button)
-				button.currNum = value
+		if button.save ~= "language" and (network_is_server() or button.localSave) and button.save then
+			if button.save == "language" and button.localSave then
+				local savedLanguage = mod_storage_load("language")
+
+				if
+					savedLanguage == "en"
+					or savedLanguage == "es"
+					or savedLanguage == "pt-br"
+					or savedLanguage == "fr"
+				then
+					language = savedLanguage
+				end
+			elseif button.save ~= "language" then
+				local value = tonumber(mod_storage_load(button.save))
+				local min = button.minNum or 0
+				local max = button.maxNum or 999
+
+				if value and value % 1 == 0 and button.currNum and value >= min and value <= max then
+					button[2](value, button)
+					button.currNum = value
+				end
 			end
 		end
 	end
 end
+
+-- Rebuild the menu using the loaded language
+menu_data = create_menu_data()
 
 -- CS support
 if charSelectExists then

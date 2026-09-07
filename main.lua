@@ -1,4 +1,4 @@
--- name: \\#00ffff\\Drench Game DX v1.3.2
+-- name: \\#00ffff\\Drench Game DX v1.3.2.1
 -- description: Squid Game in Mario 64!\n\nCommissioned by Drenchy\nInspired by Dani's \"Crab Game\"\n\nProgramming: EmilyEmmi\n\nMaps: biobak, EmilyEmmi, Woissil\n\nSoundtrack: murioz, Awesome Seal Guy (YT)\n\nVoice Acting:\nEspi as Toad\nSqueex as Mingle Callout\nTrashcam as Waluigi\n\nAds: Squeex's Community\n\nSpecial Thanks: Squishy
 -- category: gamemode
 -- incompatible: gamemode
@@ -24,16 +24,12 @@ GAME_MODE_DICE = 7
 GAME_MODE_COIN_RAIN = 8
 GAME_MODE_DEATH_HIT = 9
 GAME_MODE_MURDER = 10
-GAME_MODE_RUSSIAN_ROULETTE = 11
-GAME_MODE_FIERY = 12
-GAME_MODE_RUN = 13
-GAME_MODE_SIMON = 14
-GAME_MODE_BOMB_THROWER = 15
-GAME_MODE_BALLOON_MADNESS = 16
-GAME_MODE_HOT_RING = 17
-GAME_MODE_FREEZE_TAG = 18
-GAME_MODE_DUEL = 19 -- needs to be at the end due to its special nature
-GAME_MODE_MAX = 20
+GAME_MODE_FIERY = 11
+GAME_MODE_BALLOON_MADNESS = 12
+GAME_MODE_HOT_RING = 13
+GAME_MODE_FREEZE_TAG = 14
+GAME_MODE_DUEL = 15 -- needs to be at the end due to its special nature
+GAME_MODE_MAX = 16
 
 TEAM_SELECTION_RANDOM = 0
 TEAM_SELECTION_HOST = 1
@@ -161,6 +157,7 @@ modifierBits = {
 require("./translations/translation-main")
 local WI = require("./tweaks/b-wins")
 local MWI = require("./tweaks/c-mWins")
+local TPM = require("./tweaks/d-tPoints")
 
 -- default values for all players
 for i = 0, MAX_PLAYERS - 1 do
@@ -173,6 +170,7 @@ for i = 0, MAX_PLAYERS - 1 do
 	sMario.roundScore = 0
 	sMario.gameWins = 0
 	sMario.minigameWins = 0
+	sMario.totalPoints = 0
 	sMario.holdingBomb = false
 	sMario.murderIsMurderer = false
 	sMario.murderIsSheriff = false
@@ -209,6 +207,7 @@ function load_on_sync()
 	sMario.roundScore = 0
 	sMario.gameWins = 0
 	sMario.minigameWins = 0
+	sMario.totalPoints = 0
 	sMario.tagId = 0
 	sMario.equippedTag = 0
 	sMario.holdingBomb = false
@@ -217,7 +216,6 @@ function load_on_sync()
 	sMario.rSelectedNumber = 1
 	sMario.frozen = false
 	sMario.freezeTagIsIt = false
-	sMario.virus = false
 	sMario.balloons = 3
 	sMario.victory = false
 	sMario.winAwarded = false
@@ -264,6 +262,7 @@ hook_event(HOOK_ON_LEVEL_INIT, starting_setup)
 
 hook_event(HOOK_ON_SYNC_VALID, WI.load_wins)
 hook_event(HOOK_ON_SYNC_VALID, MWI.load_m_wins)
+hook_event(HOOK_ON_SYNC_VALID, TPM.load_points)
 
 function is_modifier_active(bit)
 	return (gGlobalSyncTable.activeModifiersBitfield & bit) ~= 0
@@ -677,7 +676,7 @@ function mario_update(m)
 	local yellow = false
 	local desc = ""
 	local function get_description_color(defaultColor, playerIndex)
-		local tagId = gPlayerSyncTable[0].tagId
+		local tagId = gPlayerSyncTable[playerIndex].tagId or 0
 
 		if (tagId & TAG_TYPE.CREATOR) ~= 0 then
 			local hue = (get_global_timer() * 4) % 360
@@ -688,7 +687,7 @@ function mario_update(m)
 	end
 	if sMario.spectator then
 		local c = get_description_color({ r = 100, g = 100, b = 100 }, m.playerIndex)
-		network_player_set_description(np, "\\#c8c8c8\\Spectator", c.r, c.g, c.b, 255)
+		network_player_set_description(np, "\\#c8c8c8\\" .. translate("spectator"), c.r, c.g, c.b, 255)
 	elseif gGlobalSyncTable.gameState == GAME_STATE_LOBBY then
 		if sMario.ready then
 			highlight = true
@@ -699,10 +698,10 @@ function mario_update(m)
 	elseif gGlobalSyncTable.gameState == GAME_STATE_GAME_END then
 		if gGlobalSyncTable.eliminationMode then
 			if sMario.eliminated then
-				desc = "Dead"
+				desc = translate("dead")
 			else
 				highlight = true
-				desc = "Alive"
+				desc = translate("alive")
 			end
 		elseif gGlobalSyncTable.teamCount == 0 then
 			local c = get_description_color({ r = 255, g = 255, b = 255 }, m.playerIndex)
@@ -738,18 +737,18 @@ function mario_update(m)
 			highlight = newHighlight
 			yellow = newYellow
 		elseif sMario.eliminated then
-			desc = "Dead"
+			desc = translate("dead")
 		elseif (gGlobalSyncTable.gameState ~= GAME_STATE_LOBBY) and gData.autoElimination then
 			-- faded red or green based on our placement
 			highlight = (sMario.roundScore and sMario.roundScore >= storedSafeScore)
 			desc = string.format("%.01f", (sMario.roundScore or 0) / 10)
 		elseif sMario.victory then
 			highlight = true
-			desc = "Finished"
+			desc = translate("finished")
 		else
 			highlight = true
 			yellow = (gData.victoryFunc ~= nil)
-			desc = "Alive"
+			desc = translate("alive")
 		end
 	end
 	if desc ~= "" then
@@ -760,19 +759,19 @@ function mario_update(m)
 				color = { r = 255, g = 255, b = 80 }
 			elseif highlight then
 				color = { r = 80, g = 255, b = 80 }
-			elseif desc == "Dead" then
+			elseif desc == translate("dead") then
 				color = { r = 255, g = 40, b = 40 }
 			else
 				color = { r = 255, g = 80, b = 80 }
 			end
 		else
 			if showColorNames then
-				if desc == "Finished" then
-					desc = "Done"
-				elseif desc == "Waiting..." then
-					desc = "Idle"
-				elseif desc == "Ready!" then
-					desc = "OK!"
+				if desc == translate("finished") then
+					desc = translate("done")
+				elseif desc == translate("waiting_text") then
+					desc = translate("idle")
+				elseif desc == translate("ready_text") then
+					desc = translate("ok")
 				end
 				desc = TEAM_DATA[sMario.team][4] .. ": " .. desc
 			end
@@ -1463,6 +1462,7 @@ function update()
 						sMario.earnedPoints = math.ceil(sMario.earnedPoints * sMario.multiplier)
 					end
 					sMario.points = sMario.points + sMario.earnedPoints
+					TPM.add_points(sMario.earnedPoints)
 				end)
 			end
 		end

@@ -221,6 +221,12 @@ return {
 	winners_colon = "\\#ffff50\\Ganadores:",
 	alive = "\\#50ff50\\Vivo",
 	dead = "\\#ff2828\\Muerto",
+	finished = "\\#50ff50\\Finalizado",
+	spectator = "\\#c8c8c8\\Espectador",
+	done = "Hecho",
+	idle = "Inactivo",
+	ok = "OK!",
+	not_ready = "¡No listo!",
 	rankings = "\\#ffff50\\CLASIFICACIÓN",
 	modifiers_title = "\\#ffff50\\MODIFICADORES",
 
@@ -261,4 +267,7 @@ return {
 	simon_run = "¡Corre!",
 	simon_backflip = "¡Haz un backflip!",
 	desc_freeze_tag = "¡Congela a tus oponentes! Los jugadores congelados pueden ser descongelados por sus compañeros.",
+	total_points_header = "Puntos Totales",
+	l_next = "[L] Siguiente",
+	l_points = "[L] Puntos Totales",
 }

@@ -219,6 +219,12 @@ return {
 	winners_colon = "\\#ffff50\\Winners:",
 	alive = "\\#50ff50\\Alive",
 	dead = "\\#ff2828\\Dead",
+	finished = "\\#50ff50\\Finished",
+	spectator = "\\#c8c8c8\\Spectator",
+	done = "Done",
+	idle = "Idle",
+	ok = "OK!",
+	not_ready = "Not ready!",
 	rankings = "\\#ffff50\\RANKINGS",
 	modifiers_title = "\\#ffff50\\MODIFIERS",
 
@@ -258,4 +264,7 @@ return {
 	simon_ledge = "Grab a ledge!",
 	simon_run = "Run!",
 	simon_backflip = "Do a Backflip!",
+	total_points_header = "Total Points",
+	l_next = "[L] Next",
+	l_points = "[L] Total Points",
 }

@@ -2,7 +2,6 @@
 -- Music is compressed to 22050 Hz and Sounds are compressed to 16000
 
 local HU = require("hud-utils")
-local TRANSLATIONS = require("translations/translation-main")
 
 local musicBitrate = 22050
 local musicData = {
@@ -385,7 +384,17 @@ function render_music_popup()
 
 	-- Header
 	djui_hud_set_color(185, 185, 185, alpha)
-	djui_hud_print_text_interpolated(translate("now_playing"), x + 28, yPrev + 11, 0.6, 0.6, x + 28, yCurr + 11, 0.6, 0.6)
+	djui_hud_print_text_interpolated(
+		translate("now_playing"),
+		x + 28,
+		yPrev + 11,
+		0.6,
+		0.6,
+		x + 28,
+		yCurr + 11,
+		0.6,
+		0.6
+	)
 
 	-- Song title
 	djui_hud_set_color(255, 255, 255, alpha)

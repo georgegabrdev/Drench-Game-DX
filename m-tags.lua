@@ -1,7 +1,3 @@
-if unsupported then
-	return
-end
-
 ----------------
 --- TAG DATA ---
 ----------------

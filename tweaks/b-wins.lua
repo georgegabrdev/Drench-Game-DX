@@ -1,9 +1,5 @@
 -- b-wins.lua
 
-if unsupported then
-	return
-end
-
 local WI = {}
 
 gPlayerSyncTable[0].gameWins = 0

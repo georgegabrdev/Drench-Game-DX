@@ -1,6 +1,5 @@
 local HU = require("../hud-utils")
 local MWI = require("../tweaks/c-mWins")
-local TRANSLATIONS = require("../translations/translation-main")
 local M = {}
 
 -- all hud stuff
@@ -70,9 +69,9 @@ function M.render_main_hud()
 		lengthLimit = width / scale - 40 * scale
 		for_each_connected_player(function(i)
 			local sMario = gPlayerSyncTable[i]
-			local addStr = "\\#ff5050\\Waiting..."
+			local addStr = "\\#ff5050\\" .. translate("waiting_text")
 			if sMario.ready then
-				addStr = "\\#50ff50\\Ready!"
+				addStr = "\\#50ff50\\" .. translate("ready")
 			end
 			local name = network_get_player_text_color_string(i) .. get_display_name(i)
 			name = cap_color_text(name, 18)

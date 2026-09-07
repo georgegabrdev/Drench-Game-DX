@@ -1,6 +1,5 @@
 gGlobalSoundSource = { x = 0, y = 0, z = 0 }
 DEBUG_MODE = _G.cheatsApi -- allows solo testing, and also displays some things in console for Mingle and Glass Bridge
-local TRANSLATIONS = require("translations/translation-main")
 
 -- spawns an object but sets yaw, pitch, and roll to 0 (since it normally copies Mario's)
 function spawn_object_no_rotate(id, model, x, y, z, func, sync)

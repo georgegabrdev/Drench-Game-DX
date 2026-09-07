@@ -1,5 +1,4 @@
 local HU = require("../hud-utils")
-local TRANSLATIONS = require("../translations/translation-main")
 
 local M = {}
 
@@ -11,21 +10,26 @@ end
 
 local function get_player_location(i)
 	local np = gNetworkPlayers[i]
+
 	if not np then
 		return translate("unknown")
 	end
 
 	local location = get_level_name(np.currCourseNum, np.currLevelNum, np.currAreaIndex)
+
 	return location or translate("unknown")
 end
 
 local function remove_color(text, get_color)
 	local start = text:find("\\")
 	local next = 1
+
 	while (next ~= nil) and (start ~= nil) do
 		start = text:find("\\")
+
 		if start ~= nil then
 			next = text:find("\\", start + 1)
+
 			if next == nil then
 				next = text:len() + 1
 			end
@@ -33,26 +37,22 @@ local function remove_color(text, get_color)
 			if get_color then
 				local color = text:sub(start, next)
 				local render = text:sub(1, start - 1)
+
 				text = text:sub(next + 1)
+
 				return text, color, render
 			else
 				text = text:sub(1, start - 1) .. text:sub(next + 1)
 			end
 		end
 	end
+
 	return text
 end
 
--- ---------------------------------------------------------------------
--- MOD LIST HANDLING
--- Builds a de-duplicated / grouped / capped list of mod display strings
--- instead of a single giant newline-joined blob.
--- ---------------------------------------------------------------------
 local MAX_MODS_DISPLAY = 8
 
 local function truncate_to_width(text, scale, maxW)
-	-- Respects \color\ escape sequences (they don't count toward width)
-	-- and walks the string safely without cutting inside an escape.
 	if djui_hud_measure_text(text) * scale <= maxW then
 		return text
 	end
@@ -71,9 +71,11 @@ local function truncate_to_width(text, scale, maxW)
 			safe = safe .. char
 		else
 			local charW = djui_hud_measure_text(char) * scale
+
 			if currentW + charW > maxW then
 				break
 			end
+
 			currentW = currentW + charW
 			safe = safe .. char
 		end
@@ -90,7 +92,6 @@ local function get_active_mods_list()
 	local nonCSMods = {}
 	local csPackCount = 0
 	local csIndex = -1
-
 	local modIdx = 0
 
 	while gActiveMods[modIdx] ~= nil do
@@ -99,7 +100,6 @@ local function get_active_mods_list()
 		if modData and modData.name then
 			local rawName = tostring(modData.name)
 			local cleanName = rawName
-
 			local isCS = false
 
 			if cleanName:find("^Character Select") then
@@ -152,6 +152,7 @@ end
 
 local function get_display_name(i)
 	local np = gNetworkPlayers[i]
+
 	if not np then
 		return translate("unknown")
 	end
@@ -165,7 +166,7 @@ local function get_display_name(i)
 	return name
 end
 
-local showingMods = false
+local scoreboardPage = 0
 
 local switchState = 0
 local switchTimer = 0
@@ -173,13 +174,18 @@ local switchMax = 4
 
 local ListAnim = {
 	time = 0,
+
 	speed = 1,
+
 	progress = 0,
+
 	anim = {
 		startVal = 0,
 		targetVal = 1,
+
 		timeEnter = 10,
-		timeStay = 9999, -- stays open while held
+		timeStay = 9999,
+
 		timeExit = 10,
 	},
 }
@@ -191,18 +197,24 @@ local function update_switch_anim()
 	if ListAnim.time <= 0 then
 		switchState = 0
 		switchTimer = 0
-		showingMods = false
 		return
 	end
 
 	if ListAnim.time >= ListAnim.anim.timeEnter and switchState == 0 then
 		if (gControllers[0].buttonPressed & L_TRIG) ~= 0 then
-			-- only allow flipping into the mods view if there actually are mods
-			if showingMods or (gActiveMods and gActiveMods[1]) then
-				switchState = 1
-				-- Optional: hook up your project's menu-sound call here, e.g.
-				-- play_sound(SOUND_MENU_CHANGE_SELECT)
+			if scoreboardPage == 0 then
+				scoreboardPage = 1
+			elseif scoreboardPage == 1 then
+				if gActiveMods and gActiveMods[1] then
+					scoreboardPage = 2
+				else
+					scoreboardPage = 0
+				end
+			else
+				scoreboardPage = 0
 			end
+
+			switchState = 1
 		end
 	end
 
@@ -211,7 +223,6 @@ local function update_switch_anim()
 
 		if switchTimer >= switchMax then
 			switchTimer = switchMax
-			showingMods = not showingMods
 			switchState = 2
 		end
 	elseif switchState == 2 then
@@ -226,7 +237,9 @@ end
 
 function M.render_playerlist()
 	gServerSettings.enablePlayerList = 0
+
 	local prevSwitchTimer = switchTimer
+
 	djui_hud_set_font(djui_menu_get_font())
 
 	update_switch_anim()
@@ -243,11 +256,12 @@ function M.render_playerlist()
 
 	pingTimer = pingTimer + 1
 
-	if pingTimer >= 30 then -- update every second
+	if pingTimer >= 30 then
 		pingTimer = 0
 
 		for i = 0, MAX_PLAYERS - 1 do
 			local np = gNetworkPlayers[i]
+
 			if np and np.connected then
 				pingCache[i] = np.ping or 0
 			end
@@ -288,16 +302,16 @@ function M.render_playerlist()
 
 	local width = screenW * 0.5
 	local count = network_player_connected_count()
+
 	local rowSpacing = 28
 	local headerHeight = 95
 	local bottomPadding = 25
 
-	-- ---- content-driven height ----
-	local modsList, modsTotal
+	local modsList, modsTotal = get_active_mods_list()
+
 	local height
 
-	if showingMods then
-		modsList, modsTotal = get_active_mods_list()
+	if scoreboardPage == 2 then
 		height = 70 + (math.max(#modsList, 1) * rowSpacing) + bottomPadding
 	else
 		height = headerHeight + (math.max(count, 1) * rowSpacing) + bottomPadding
@@ -307,6 +321,7 @@ function M.render_playerlist()
 	local centerY = screenH / 2
 
 	local yPrev = centerY - (height / 2) - ((1 - tPrev) * 120) + switchOffsetPrev
+
 	local yCurr = centerY - (height / 2) - ((1 - tCurr) * 120) + switchOffsetCurr
 
 	local titleYPrev = yPrev + 15
@@ -318,8 +333,8 @@ function M.render_playerlist()
 	local baseYPrev = yPrev + 95
 	local baseYCurr = yCurr + 95
 
-	-- BACKGROUND (INTERPOLATED)
 	djui_hud_set_color(8, 56, 59, math.floor(200 * tCurr))
+
 	HU.djui_hud_render_rect_rounded_interpolated(
 		x,
 		yPrev + 5,
@@ -336,8 +351,9 @@ function M.render_playerlist()
 		return
 	end
 
-	if not showingMods then
+	if scoreboardPage ~= 2 then
 		djui_hud_set_color(255, 255, 255, opacity)
+
 		local activePlayers = {}
 
 		for i = 0, MAX_PLAYERS - 1 do
@@ -347,12 +363,25 @@ function M.render_playerlist()
 		end
 
 		local playerCount = #activePlayers
+
 		local title = translate("players_colon") .. " " .. playerCount .. "/" .. tostring(MAX_PLAYERS)
 
 		djui_hud_print_text_interpolated(title, x + 20, titleYPrev, 1, x + 20, titleYCurr, 1)
+
 		djui_hud_set_color(200, 255, 255, opacity)
+
 		djui_hud_print_text_interpolated(translate("name_header"), x + 55, headerYPrev, 0.7, x + 55, headerYCurr, 0.7)
-		djui_hud_print_text_interpolated(translate("description_header"), x + 250, headerYPrev, 0.7, x + 250, headerYCurr, 0.7)
+
+		djui_hud_print_text_interpolated(
+			translate("description_header"),
+			x + 250,
+			headerYPrev,
+			0.7,
+			x + 250,
+			headerYCurr,
+			0.7
+		)
+
 		djui_hud_print_text_interpolated(
 			translate("location_header"),
 			x + width - 480,
@@ -362,18 +391,41 @@ function M.render_playerlist()
 			headerYCurr,
 			0.7
 		)
+
 		djui_hud_print_text_interpolated(translate("ping_header"), x + 350, headerYPrev, 0.7, x + 350, headerYCurr, 0.7)
-		djui_hud_print_text_interpolated(
-			translate("game_wins_header"),
-			x + width - 280,
-			headerYPrev - 15,
-			0.7,
-			x + width - 280,
-			headerYCurr - 15,
-			0.7
-		)
+
+		local statsHeader
+
+		if scoreboardPage == 0 then
+			statsHeader = translate("game_wins_header")
+		else
+			statsHeader = translate("total_points_header")
+		end
+
+		if scoreboardPage == 0 then
+			djui_hud_print_text_interpolated(
+				statsHeader,
+				x + width - 280,
+				headerYPrev - 15,
+				0.7,
+				x + width - 280,
+				headerYCurr - 15,
+				0.7
+			)
+		else
+			djui_hud_print_text_interpolated(
+				statsHeader,
+				x + width - 280,
+				headerYPrev,
+				0.7,
+				x + width - 280,
+				headerYCurr,
+				0.7
+			)
+		end
 
 		djui_hud_set_color(255, 255, 255, math.floor(100 * tCurr))
+
 		HU.djui_hud_render_rect_rounded_interpolated(
 			x + 15,
 			yPrev + 80,
@@ -386,36 +438,51 @@ function M.render_playerlist()
 			1
 		)
 
+		djui_hud_set_color(200, 200, 200, opacity)
+
+		local footer
+
 		if gActiveMods and gActiveMods[1] then
-			djui_hud_set_color(200, 200, 200, opacity)
-			local footer = translate("l_mods")
-			local fw = djui_hud_measure_text(footer) * 0.6
-			djui_hud_print_text_interpolated(
-				footer,
-				x + (width - fw) / 2 - 50,
-				yPrev + height - 18,
-				0.6,
-				x + (width - fw) / 2 - 50,
-				yCurr + height - 18,
-				0.6
-			)
+			footer = translate("l_next")
+		else
+			footer = translate("l_points")
 		end
+
+		local fw = djui_hud_measure_text(footer) * 0.6
+
+		djui_hud_print_text_interpolated(
+			footer,
+			x + (width - fw) / 2 - 50,
+			yPrev + height - 18,
+			0.6,
+			x + (width - fw) / 2 - 50,
+			yCurr + height - 18,
+			0.6
+		)
 
 		for idx, pIndex in ipairs(activePlayers) do
 			local np = gNetworkPlayers[pIndex]
 
 			if np then
 				local location = get_player_location(pIndex)
+
 				local sSync = gPlayerSyncTable[pIndex]
+
 				local wins = sSync.gameWins or 0
 
+				local minigameWins = sSync.minigameWins or 0
+
+				local totalPoints = sSync.totalPoints or 0
+
 				local ping = pingCache[pIndex]
+
 				if ping == nil then
 					ping = np.ping or 0
 					pingCache[pIndex] = ping
 				end
 
 				local rowYPrev = baseYPrev + ((idx - 1) * rowSpacing)
+
 				local rowYCurr = baseYCurr + ((idx - 1) * rowSpacing)
 
 				HU.render_player_head_interpolated(
@@ -433,10 +500,13 @@ function M.render_playerlist()
 
 				HU.print_colored_text_interpolated(
 					network_get_player_text_color_string(pIndex) .. get_display_name(pIndex),
+
 					x + 55,
 					rowYPrev,
+
 					x + 55,
 					rowYCurr,
+
 					0.8,
 					opacity
 				)
@@ -471,6 +541,7 @@ function M.render_playerlist()
 				)
 
 				local r, g, b
+
 				if ping <= 50 then
 					r, g, b = 0, 255, 0
 				elseif ping <= 100 then
@@ -489,8 +560,16 @@ function M.render_playerlist()
 
 				djui_hud_set_color(255, 255, 100, opacity)
 
+				local statText
+
+				if scoreboardPage == 0 then
+					statText = tostring(wins) .. " | " .. tostring(minigameWins)
+				else
+					statText = tostring(totalPoints)
+				end
+
 				djui_hud_print_text_interpolated(
-					tostring(wins) .. " | " .. tostring(sSync.minigameWins or 0),
+					statText,
 					x + width - 280,
 					rowYPrev,
 					0.7,
@@ -502,11 +581,13 @@ function M.render_playerlist()
 		end
 	else
 		djui_hud_set_color(255, 255, 255, opacity)
+
 		local modTitle = translate("active_mods") .. tostring(modsTotal) .. ")"
 
 		djui_hud_print_text_interpolated(modTitle, x + 20, titleYPrev, 1, x + 20, titleYCurr, 1)
 
 		djui_hud_set_color(255, 255, 255, math.floor(100 * tCurr))
+
 		HU.djui_hud_render_rect_rounded_interpolated(
 			x + 15,
 			yPrev + 45,
@@ -522,18 +603,30 @@ function M.render_playerlist()
 		if #modsList == 0 then
 			djui_hud_set_color(200, 200, 200, opacity)
 
-			djui_hud_print_text_interpolated(translate("no_mods_active"), x + 20, yPrev + 65, 0.7, x + 20, yCurr + 65, 0.7)
+			djui_hud_print_text_interpolated(
+				translate("no_mods_active"),
+				x + 20,
+				yPrev + 65,
+				0.7,
+				x + 20,
+				yCurr + 65,
+				0.7
+			)
 		else
 			local rowYBasePrev = yPrev + 65
+
 			local rowYBaseCurr = yCurr + 65
+
 			local maxTextW = width - 40
 
 			for i, modName in ipairs(modsList) do
 				local rowYPrev = rowYBasePrev + ((i - 1) * rowSpacing)
+
 				local rowYCurr = rowYBaseCurr + ((i - 1) * rowSpacing)
 
 				if (i - 1) % 2 == 0 then
 					djui_hud_set_color(0, 0, 0, math.floor(30 * tCurr))
+
 					HU.djui_hud_render_rect_rounded_interpolated(
 						x + 10,
 						rowYPrev - 6,
@@ -556,7 +649,9 @@ function M.render_playerlist()
 		end
 
 		djui_hud_set_color(200, 200, 200, opacity)
+
 		local footer = translate("l_players")
+
 		local fw = djui_hud_measure_text(footer) * 0.6
 
 		djui_hud_print_text_interpolated(

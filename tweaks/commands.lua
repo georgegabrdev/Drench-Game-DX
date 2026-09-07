@@ -8,27 +8,6 @@ end
 
 hook_chat_command("reset_wins", "Resets your wins and minigame wins. (DONT DO THIS)", on_chat_message)
 
-function on_chat_message_again(msg)
-	local num = tonumber(msg)
-	local m = gMarioStates[0]
-
-	if not num then
-		djui_chat_message_create("\\#ff5050\\Invalid amount!")
-	end
-	if not network_is_server() and not network_is_moderator() then
-		djui_chat_message_create(
-			"\\#ff5050\\You have permission to perform this command... or DO you?\n(No, you don't have moderator)"
-		)
-		return
-	end
-	for i = 1, num do
-		create_warning_popup("!!! NUCLEAR LAUNCH DETECTED !!!")
-		spawn_sync_object(id_bhvNuclearBomb, E_MODEL_NONE, m.pos.x, m.pos.y, m.pos.z, nil)
-	end
-end
-
-hook_chat_command("nuclearbomb", "No.", on_chat_message_again)
-
 function end_round()
 	if not network_is_server() and not network_is_moderator() then
 		djui_chat_message_create(
