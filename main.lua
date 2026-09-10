@@ -929,6 +929,7 @@ end
 hook_event(HOOK_MARIO_UPDATE, mario_update)
 
 local countedWin = false
+local countedPoints = false
 -- update function; handles game timers, lighting, and some parts of certain minigames.
 function update()
 	-- CS support
@@ -1205,6 +1206,7 @@ function update()
 		end
 	elseif gGlobalSyncTable.gameState == GAME_STATE_RULES then
 		countedWin = false
+		countedPoints = false
 		gGlobalSyncTable.round = 1
 		gGlobalSyncTable.freezeRoundTimer = false
 		gGlobalSyncTable.starStealOwner = 255
