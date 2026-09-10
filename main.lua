@@ -1122,15 +1122,13 @@ function update()
 	end
 
 	-- add earned points
-	if not gGlobalSyncTable.eliminationMode then
-		for_each_connected_player(function(i)
-			local sMario = gPlayerSyncTable[i]
-			if sMario.multiplier and sMario.multiplier ~= 1 then
-				sMario.earnedPoints = math.ceil(sMario.earnedPoints * sMario.multiplier)
-			end
-			sMario.points = sMario.points + sMario.earnedPoints
+	if not gGlobalSyncTable.eliminationMode and not countedPoints then
+		local sMario = gPlayerSyncTable[0]
+
+		if sMario.earnedPoints and sMario.earnedPoints ~= 0 then
+			countedPoints = true
 			TPM.add_points(sMario.earnedPoints)
-		end)
+		end
 	end
 
 	if not network_is_server() then
