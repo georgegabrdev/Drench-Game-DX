@@ -1,4 +1,4 @@
--- name: \\#00ffff\\Drench Game DX v1.3.2.1
+-- name: \\#00ffff\\Drench Game DX v1.3.2.2
 -- description: Squid Game in Mario 64!\n\nCommissioned by Drenchy\nInspired by Dani's \"Crab Game\"\n\nProgramming: EmilyEmmi\n\nMaps: biobak, EmilyEmmi, Woissil\n\nSoundtrack: murioz, Awesome Seal Guy (YT)\n\nVoice Acting:\nEspi as Toad\nSqueex as Mingle Callout\nTrashcam as Waluigi\n\nAds: Squeex's Community\n\nSpecial Thanks: Squishy
 -- category: gamemode
 -- incompatible: gamemode
@@ -236,9 +236,7 @@ function load_on_sync()
 
 	-- check for clean install
 	if network_is_server() and mod_file_exists("sound/lobby.ogg") then
-		djui_chat_message_create(
-			"\\#ff5\\NOTICE:\nIt appears you did NOT perform a clean install of Drench Game.\nTo reduce download times, remove the mod and then reinstall the latest version."
-		)
+		djui_chat_message_create(translate("clean_install_notice"))
 	end
 end
 
@@ -497,9 +495,7 @@ function mario_update(m)
 			then
 				afkTimer = afkTimer + 1
 				if afkTimer == 50 * 30 then
-					djui_chat_message_create(
-						"\\#ff5050\\You will be forced to spectate if you don't move in 10 seconds!"
-					)
+					djui_chat_message_create(translate("afk_warning"))
 				elseif afkTimer >= 60 * 30 then
 					afkSpectator = true
 					toggle_spectator()
@@ -906,9 +902,7 @@ function mario_update(m)
 
 					if alivePlayers == 2 then -- exactly two left (if we allowed one, both would be eliminated since the safe score would briefly be 999)
 						eliminate_mario(m)
-						djui_chat_message_create(
-							"\\#ff5050\\Eliminated by mercy rule-\nyou can't earn enough points to win."
-						)
+						djui_chat_message_create(translate("mercy_rule_eliminated"))
 					end
 				end
 			end
@@ -1124,6 +1118,18 @@ function update()
 				break
 			end
 		end
+	end
+
+	-- add earned points
+	if not gGlobalSyncTable.eliminationMode then
+		for_each_connected_player(function(i)
+			local sMario = gPlayerSyncTable[i]
+			if sMario.multiplier and sMario.multiplier ~= 1 then
+				sMario.earnedPoints = math.ceil(sMario.earnedPoints * sMario.multiplier)
+			end
+			sMario.points = sMario.points + sMario.earnedPoints
+			TPM.add_points(sMario.earnedPoints)
+		end)
 	end
 
 	if not network_is_server() then
@@ -1453,18 +1459,6 @@ function update()
 			gGlobalSyncTable.gameState = GAME_STATE_SCORES
 			gGlobalSyncTable.roundTimer = 0
 			gGlobalSyncTable.round = 1
-
-			-- add earned points
-			if not gGlobalSyncTable.eliminationMode then
-				for_each_connected_player(function(i)
-					local sMario = gPlayerSyncTable[i]
-					if sMario.multiplier and sMario.multiplier ~= 1 then
-						sMario.earnedPoints = math.ceil(sMario.earnedPoints * sMario.multiplier)
-					end
-					sMario.points = sMario.points + sMario.earnedPoints
-					TPM.add_points(sMario.earnedPoints)
-				end)
-			end
 		end
 	elseif gGlobalSyncTable.gameState == GAME_STATE_SCORES then
 		gGlobalSyncTable.gameTimer = gGlobalSyncTable.gameTimer + 1
@@ -1828,9 +1822,7 @@ function on_player_disconnected(m)
 			if #teammates ~= 0 then
 				local name = network_get_player_text_color_string(m.playerIndex) .. gNetworkPlayers[m.playerIndex].name
 				local teamName = TEAM_DATA[sMario.team][3] or "???"
-				djui_chat_message_create(
-					name .. "'s\\#ffff50\\ points were distributed among " .. teamName .. "\\#ffff50\\."
-				)
+				djui_chat_message_create(string.format(translate("points_distributed"), name, teamName))
 
 				if network_is_server() then
 					-- Reset points so we don't get them back when rejoining
@@ -1857,7 +1849,7 @@ function on_player_disconnected(m)
 
 	if rejoinID and ((not eliminated) or sMario.points ~= 0 or sMario.earnedPoints ~= 0 or roundScore ~= 0) then
 		local name = network_get_player_text_color_string(m.playerIndex) .. get_display_name(m.playerIndex)
-		djui_chat_message_create(name .. "\\#ffff50\\ can rejoin to restore their progress.")
+		djui_chat_message_create(name .. translate("can_rejoin"))
 		if not network_is_server() then
 			return
 		end
@@ -2029,9 +2021,9 @@ function on_packet_star_steal(data, self)
 		end
 		vName = vPlayerColor .. vName
 
-		djui_popup_create(aName .. "\\#ffffff\\ stole " .. vName .. "\\#ffffff\\ \\#ffff50\\Star\\#ffffff\\!", 1)
+		djui_popup_create(string.format(translate("star_stolen_from"), aName, vName), 1)
 	else
-		djui_popup_create(aName .. "\\#ffffff\\ stole the \\#ffff50\\Star\\#ffffff\\!", 1)
+		djui_popup_create(string.format(translate("star_stolen"), aName), 1)
 	end
 end
 
@@ -2058,7 +2050,7 @@ function on_packet_rejoin(data, self)
 		return
 	end
 
-	djui_chat_message_create("\\#ffff50\\Your progress was restored!")
+	djui_chat_message_create(translate("progress_restored"))
 	local sMario = gPlayerSyncTable[0]
 	sMario.points = data.points or 0
 	sMario.team = data.team or sMario.team
@@ -2090,7 +2082,7 @@ function on_packet_mod_choose(data, self)
 	if not inMenu then
 		enter_menu(3)
 	end
-	djui_chat_message_create("\\#ffff50\\Since you're the first moderator available, you will pick this minigame!")
+	djui_chat_message_create(translate("moderator_pick"))
 end
 
 function on_packet_global_msg(data, self)
@@ -2108,10 +2100,10 @@ function on_packet_kill(data, self)
 	end
 	local name = network_get_player_text_color_string(np.localIndex) .. np.name
 	if not gGlobalSyncTable.freezeRoundTimer then
-		djui_chat_message_create("\\#ffff50\\You killed " .. name .. "!\n\\#ffff50\\Got a full heal!")
+		djui_chat_message_create(translate("killed_player_heal") .. name .. translate("got_full_heal"))
 		gMarioStates[0].healCounter = 31
 	else
-		djui_chat_message_create("\\#ffff50\\You killed " .. name .. "!")
+		djui_chat_message_create(translate("killed_player") .. name .. translate("killed_suffix"))
 	end
 end
 
@@ -2223,7 +2215,7 @@ function on_packet_simon_command(data, self)
 
 	local text = translate(key)
 
-	djui_chat_message_create("\\#ffff50\\Simon Says: \\#ffffff\\" .. text)
+	djui_chat_message_create(translate("simon_says_prefix") .. text)
 end
 
 PACKET_STAR_STEAL = 0
@@ -2272,12 +2264,10 @@ function desync_fix_command(msg)
 			id = PACKET_REQUEST_DESYNC_FIX,
 		})
 	else
-		djui_chat_message_create(
-			"\\#ff5050\\You have permission to perform this command... or DO you?\n(No, you don't have moderator)"
-		)
+		djui_chat_message_create(translate("no_moderator_permission"))
 		return true
 	end
-	djui_chat_message_create("Attempting to correct desync...")
+	djui_chat_message_create(translate("correcting_desync"))
 	return true
 end
 

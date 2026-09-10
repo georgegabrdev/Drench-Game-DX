@@ -87,7 +87,7 @@ local function on_packet_receive(data)
 	djui_chat_message_create(
 		network_get_player_text_color_string(victimIndex)
 			.. victimName
-			.. " has been killed by "
+			.. translate("killed_by")
 			.. network_get_player_text_color_string(killerIndex)
 			.. killerName
 	)

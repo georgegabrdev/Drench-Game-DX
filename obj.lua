@@ -239,13 +239,13 @@ function glass_loop(o)
 			if newPoints <= 2 then
 				-- points are still calculated even in elimination mode because they are used to determine if PVP is allowed
 				if not gGlobalSyncTable.eliminationMode then
-					djui_chat_message_create("\\#ffff50\\+" .. newPoints .. " points")
+					djui_chat_message_create(string.format(translate("glass_points"), newPoints))
 					play_sound(SOUND_GENERAL_COIN, gGlobalSoundSource)
 				end
 				sMario0.earnedPoints = sMario0.earnedPoints + newPoints
 			else
 				play_sound(SOUND_MENU_CAMERA_BUZZ, gGlobalSoundSource)
-				djui_chat_message_create("\\#ff5050\\You aren't allowed to skip any glass panes!")
+				djui_chat_message_create(translate("glass_skip_warning"))
 				set_to_spawn_pos(m0, true)
 			end
 		end
@@ -314,7 +314,7 @@ function gb_thwomp_loop(o)
 
 		m.health = m.health - 6 -- this generally won't finish before the thwomp shows up
 		if o.oTimer == 1 and m.playerIndex == 0 then
-			djui_chat_message_create("\\#ff5050\\Keep moving, or there will be consequences...")
+			djui_chat_message_create(translate("keep_moving_warning"))
 		elseif o.oTimer >= 10 * 30 then
 			o.oVelY = -150
 			o.oPosY = m.pos.y - 15 * o.oVelY -- take 0.5 seconds to reach Mario

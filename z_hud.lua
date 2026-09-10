@@ -477,7 +477,7 @@ local function create_menu_data()
 					local lastOption = menu_data[4][#menu_data[4]]
 					for i = 1, x do
 						menu_data[4][i + 1] = {
-							"Dueler " .. i,
+							translate("dueler") .. i,
 							function()
 								-- do nothing
 							end,
@@ -501,7 +501,7 @@ local function create_menu_data()
 				runOnChange = true,
 			},
 			{
-				"Dueler 1",
+				translate("dueler") .. "1",
 				function()
 					-- do nothing
 				end,
@@ -511,7 +511,7 @@ local function create_menu_data()
 				maxNum = MAX_PLAYERS - 1,
 			},
 			{
-				"Dueler 2",
+				translate("dueler") .. "2",
 				function()
 					-- do nothing
 				end,
@@ -539,7 +539,7 @@ local function create_menu_data()
 					if do_solo_debug() or duelers >= 2 then
 						gGlobalSyncTable.selectedMode = GAME_MODE_DUEL
 						gGlobalSyncTable.allDuel = false
-						djui_chat_message_create("Selected \\#ffff50\\" .. translate("duel"))
+						djui_chat_message_create(translate("selected") .. "\\#ffff50\\" .. translate("duel"))
 						inMenu = false
 					else
 						djui_chat_message_create("\\#ff5050\\" .. translate("must_have_at_least_2_duelers"))
@@ -774,7 +774,7 @@ function build_map_menu(menu)
 				gGlobalSyncTable.gameLevelOverride = level
 				gGlobalSyncTable.selectedMode = menuSelectedMode
 				local gData = GAME_MODE_DATA[menuSelectedMode or 0]
-				djui_chat_message_create("Selected \\#ffff50\\" .. gData.name)
+				djui_chat_message_create(translate("selected") .. "\\#ffff50\\" .. gData.name)
 				inMenu = false
 			end,
 		})
@@ -786,7 +786,7 @@ function build_map_menu(menu)
 			gGlobalSyncTable.gameLevelOverride = -1
 			gGlobalSyncTable.selectedMode = menuSelectedMode
 			local gData = GAME_MODE_DATA[menuSelectedMode or 0]
-			djui_chat_message_create("Selected \\#ffff50\\" .. gData.name)
+			djui_chat_message_create(translate("selected") .. "\\#ffff50\\" .. gData.name)
 			inMenu = false
 		end,
 	})

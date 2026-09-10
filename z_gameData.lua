@@ -7,7 +7,7 @@ local coinRainInterval = 10 -- spawn every 20 frames
 
 GAME_MODE_DATA = {
 	[GAME_MODE_GLASS] = {
-		name = "Glass Bridge",
+		name = translate("game_glass"),
 		desc = translate("desc_glass"),
 		level = LEVEL_GLASS,
 		interact = PLAYER_INTERACTIONS_NONE,
@@ -32,7 +32,7 @@ GAME_MODE_DATA = {
 					return true
 				elseif m.playerIndex == 0 then
 					play_sound(SOUND_MENU_CAMERA_BUZZ, gGlobalSoundSource)
-					djui_chat_message_create("\\#ff5050\\You aren't allowed to skip any glass panes!")
+					djui_chat_message_create(translate("glass_skip_warning"))
 					set_to_spawn_pos(m, true)
 				end
 			end
@@ -58,7 +58,7 @@ GAME_MODE_DATA = {
 		end,
 	},
 	[GAME_MODE_LIGHTS_OUT] = {
-		name = "Lights Out",
+		name = translate("game_lights_out"),
 		desc = translate("desc_lights_out"),
 		descElim = translate("desc_elim_lights_out"),
 		maxTime = 3 * 60 * 30, -- 3 minutes
@@ -79,7 +79,7 @@ GAME_MODE_DATA = {
 			if (not gGlobalSyncTable.eliminationMode) and currentPoints > sMario.earnedPoints then
 				local newPoints = (currentPoints - sMario.earnedPoints)
 				sMario.earnedPoints = currentPoints
-				djui_chat_message_create("\\#ffff50\\+" .. newPoints .. " point(s) (" .. newPoints * 2 .. " DMG)")
+				djui_chat_message_create(string.format(translate("lights_out_points"), newPoints, newPoints * 2))
 				play_sound(SOUND_GENERAL_COIN, gGlobalSoundSource)
 			end
 		end,
@@ -115,7 +115,7 @@ GAME_MODE_DATA = {
 		end,
 	},
 	[GAME_MODE_RED_GREEN_LIGHT] = {
-		name = "Red Light, Green Light",
+		name = translate("game_red_green_light"),
 		desc = translate("desc_red_green_light"),
 		maxTime = 2 * 60 * 30, -- 2 minutes
 		level = LEVEL_RGLIGHT,
@@ -129,7 +129,7 @@ GAME_MODE_DATA = {
 		end,
 	},
 	[GAME_MODE_MINGLE] = {
-		name = "Mingle",
+		name = translate("game_mingle"),
 		desc = translate("desc_mingle"),
 		level = LEVEL_MINGLE,
 		interact = PLAYER_INTERACTIONS_SOLID,
@@ -143,7 +143,7 @@ GAME_MODE_DATA = {
 				if m.playerIndex == 0 and mingleWasOnCarousel then
 					mingleWasOnCarousel = false
 					play_sound(SOUND_MENU_CAMERA_BUZZ, gGlobalSoundSource)
-					djui_chat_message_create("\\#ff5050\\Stay on the carousel!")
+					djui_chat_message_create(translate("mingle_stay_on_carousel"))
 				end
 				m.health = m.health - 8
 
@@ -313,7 +313,7 @@ GAME_MODE_DATA = {
 		end,
 	},
 	[GAME_MODE_STAR_STEAL] = {
-		name = "Star Steal",
+		name = translate("game_star_steal"),
 		desc = translate("desc_star_steal"),
 		level = { LEVEL_TOAD_TOWN, LEVEL_KOOPA_KEEP }, -- selects toad town or koopa keep
 		interact = PLAYER_INTERACTIONS_PVP, -- so invulnerability frames exist
@@ -400,7 +400,7 @@ GAME_MODE_DATA = {
 		end,
 	},
 	[GAME_MODE_BOMB_TAG] = {
-		name = "Bomb Tag",
+		name = translate("game_bomb_tag"),
 		desc = translate("desc_bomb_tag"),
 		level = { LEVEL_TOAD_TOWN, LEVEL_KOOPA_KEEP, LEVEL_DS_FORT }, -- selects toad town or koopa keep
 		interact = PLAYER_INTERACTIONS_PVP, -- so invulnerability frames exist
@@ -531,7 +531,7 @@ GAME_MODE_DATA = {
 		end,
 	},
 	[GAME_MODE_KOTH] = {
-		name = "King Of The Hill",
+		name = translate("game_koth"),
 		desc = translate("desc_koth"),
 		descTeams = translate("desc_team_koth"),
 		level = LEVEL_KOTH,
@@ -550,7 +550,7 @@ GAME_MODE_DATA = {
 		end,
 	},
 	[GAME_MODE_DUEL] = {
-		name = "Duel",
+		name = translate("game_duel"),
 		desc = translate("desc_duel"),
 		descElim = translate("desc_elim_duel"),
 		descTeams = translate("desc_team_duel"),
@@ -717,7 +717,7 @@ GAME_MODE_DATA = {
 				duelEnding = false
 				local valid = sMario0.validForDuel and not sMario0.spectator
 				if gGlobalSyncTable.round > 5 and (duelLastState ~= DUEL_STATE_WAIT) then
-					djui_chat_message_create("Tiebreaker round!")
+					djui_chat_message_create(translate("tiebreaker_round"))
 					if sMario0.roundScore < toWin - 1 then
 						valid = false
 					end
@@ -888,7 +888,7 @@ GAME_MODE_DATA = {
 		end,
 	},
 	[GAME_MODE_DICE] = {
-		name = "Dice Block Battle",
+		name = translate("game_dice"),
 		desc = translate("desc_dice"),
 		descElim = translate("desc_elim_dice"),
 		level = { LEVEL_TOAD_TOWN, LEVEL_KOOPA_KEEP, LEVEL_DS_FORT }, -- selects toad town or koopa keep
@@ -935,14 +935,14 @@ GAME_MODE_DATA = {
 				local roll = math.random(1, dieMax)
 				local name = network_get_player_text_color_string(attacker.playerIndex)
 					.. gNetworkPlayers[attacker.playerIndex].name
-				local text = string.format("%s\\#ffff50\\ rolled %d (needed %d+). ", name, roll, chance)
+				local text = string.format(translate("dice_roll_prefix"), name, roll, chance)
 				spawn_orange_number_at_pos(roll, victim.pos.x, victim.pos.y + 25, victim.pos.z, true)
 				if roll >= chance then
 					eliminate_mario(victim)
-					text = text .. "RIP..."
+					text = text .. translate("dice_roll_kill")
 					djui_chat_message_create(text)
 				else
-					text = text .. "You survived!"
+					text = text .. translate("dice_roll_survived")
 					djui_chat_message_create(text)
 					sVictim.roundScore = sVictim.roundScore + 1
 					--sAttacker.roundScore = sAttacker.roundScore + 2 -- Done in dice roll packet
@@ -967,7 +967,7 @@ GAME_MODE_DATA = {
 			local dieMax = 20
 			local chance = math.min(gPlayerSyncTable[0].roundScore + 1, dieMax)
 			local percent = math.round(chance / dieMax * 100)
-			add_line_to_table(sideBarLines, string.format("\\#ff5050\\Chance to kill: (%d%%)", percent), lengthLimit)
+			add_line_to_table(sideBarLines, string.format(translate("chance_to_kill"), percent), lengthLimit)
 		end,
 		beforePhysStepFunc = function(m, stepType)
 			local alivePlayers = 0
@@ -994,7 +994,7 @@ GAME_MODE_DATA = {
 				m.vel.z = m.vel.z * 1.1
 				if m.playerIndex == 0 and not prevDiceSpeedBoost then
 					prevDiceSpeedBoost = true
-					djui_chat_message_create("\\#ffff50\\You now have a slight speed boost!")
+					djui_chat_message_create(translate("slight_speed_boost"))
 				end
 			elseif m.playerIndex == 0 then
 				prevDiceSpeedBoost = false
@@ -1002,7 +1002,7 @@ GAME_MODE_DATA = {
 		end,
 	},
 	[GAME_MODE_COIN_RAIN] = {
-		name = "Coin Rain",
+		name = translate("game_coin_rain"),
 		desc = translate("desc_coinrain"),
 
 		level = { LEVEL_TOAD_TOWN, LEVEL_LIGHTS_OUT },
@@ -1056,7 +1056,7 @@ GAME_MODE_DATA = {
 		end,
 	},
 	[GAME_MODE_DEATH_HIT] = {
-		name = "Death Hit",
+		name = translate("game_death_hit"),
 		desc = translate("desc_death_hit"),
 		level = { LEVEL_TOAD_TOWN, LEVEL_KOOPA_KEEP, LEVEL_LIGHTS_OUT },
 		interact = PLAYER_INTERACTIONS_PVP,
@@ -1090,7 +1090,7 @@ GAME_MODE_DATA = {
 		end,
 	},
 	[GAME_MODE_MURDER] = {
-		name = "Murder Mystery",
+		name = translate("game_murder"),
 		desc = translate("desc_murder"),
 		level = {
 			LEVEL_TOAD_TOWN,
@@ -1224,7 +1224,7 @@ GAME_MODE_DATA = {
 		end,
 	},
 	[GAME_MODE_FIERY] = {
-		name = "Fiery Meteor Falls",
+		name = translate("game_fiery"),
 		desc = translate("desc_fiery"),
 		level = LEVEL_BOWSER_2,
 		interact = PLAYER_INTERACTIONS_SOLID,
@@ -1263,7 +1263,7 @@ GAME_MODE_DATA = {
 		end,
 	},
 	[GAME_MODE_BALLOON_MADNESS] = {
-		name = "Balloon Madness",
+		name = translate("game_balloon_madness"),
 		desc = translate("desc_balloon_madness"),
 		level = { LEVEL_TOAD_TOWN, LEVEL_KOOPA_KEEP, LEVEL_LIGHTS_OUT, LEVEL_DS_FORT },
 		interact = PLAYER_INTERACTIONS_PVP, -- so invulnerability frames exist
@@ -1316,15 +1316,15 @@ GAME_MODE_DATA = {
 
 					if attacker.playerIndex == 0 then
 						djui_chat_message_create(
-							"\\#ffff50\\Pop! "
-								.. gNetworkPlayers[victim.playerIndex].name
-								.. " has "
-								.. sVictim.balloons
-								.. " balloon(s) left"
+							string.format(
+								translate("balloon_popped_other"),
+								gNetworkPlayers[victim.playerIndex].name,
+								sVictim.balloons
+							)
 						)
 					end
 					if victim.playerIndex == 0 and attacker.playerIndex ~= 0 then
-						djui_chat_message_create("\\#ff5050\\Your balloon popped! (" .. sVictim.balloons .. " left)")
+						djui_chat_message_create(string.format(translate("balloon_popped_self"), sVictim.balloons))
 					end
 
 					victim.invincTimer = 30 -- brief mercy invuln after a pop
@@ -1360,7 +1360,7 @@ GAME_MODE_DATA = {
 		end,
 	},
 	[GAME_MODE_HOT_RING] = {
-		name = "Hot Ring",
+		name = translate("game_hot_ring"),
 		desc = translate("desc_hot_ring"),
 		level = LEVEL_TOAD_TOWN,
 		interact = PLAYER_INTERACTIONS_PVP,
@@ -1384,7 +1384,7 @@ GAME_MODE_DATA = {
 		end,
 	},
 	[GAME_MODE_FREEZE_TAG] = {
-		name = "Freeze Tag",
+		name = translate("game_freeze_tag"),
 		desc = translate("desc_freeze_tag"),
 		level = { LEVEL_TOAD_TOWN, LEVEL_KOOPA_KEEP, LEVEL_DS_FORT },
 		interact = PLAYER_INTERACTIONS_PVP, -- so invulnerability frames exist
@@ -1437,7 +1437,7 @@ GAME_MODE_DATA = {
 
 					play_sound(SOUND_GENERAL_COIN, gGlobalSoundSource)
 
-					djui_chat_message_create("\\#7ad3ff\\You've been thawed out!")
+					djui_chat_message_create(translate("thawed_out"))
 
 					return true
 				end
@@ -1457,7 +1457,7 @@ GAME_MODE_DATA = {
 				play_sound(SOUND_MENU_CAMERA_BUZZ, gGlobalSoundSource)
 
 				if victim.playerIndex == 0 then
-					djui_chat_message_create("\\#ff5050\\You've been frozen! Wait for a teammate to thaw you.")
+					djui_chat_message_create(translate("frozen_wait_for_teammate"))
 				end
 			end
 		end,

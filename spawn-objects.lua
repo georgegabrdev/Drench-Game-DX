@@ -85,7 +85,7 @@ end
 -- This sends a notification to infrom of controls change
 hook_on_sync_table_change(gGlobalSyncTable, "dpadUDFree", "dpadUDFree", function(tag, oldVal, newVal)
 	if oldVal ~= nil and newVal ~= oldVal then
-		djui_popup_create("Host has changed control scheme", 2)
+		djui_popup_create(translate("host_changed_control_scheme"), 2)
 	end
 end)
 
@@ -1697,7 +1697,7 @@ function spawn_selected(m)
 			data.cooldown = COOLDOWN_FRAMES * (obj.cooldown_multiplier or 1)
 		end
 
-		djui_popup_create("Spawned \\#FFFF00\\" .. name .. "\\#d5d5d5\\.", 1)
+		djui_popup_create(string.format(translate("spawned_object"), name), 1)
 	end
 end
 
@@ -1822,7 +1822,7 @@ local function handle_object_deletion(m)
 	local canDelete = network_is_server() or gGlobalSyncTable.allowGuestDeletion
 	if not canDelete then
 		if m.playerIndex == 0 then
-			djui_popup_create("\\#ff4444\\Guest object deletion is disabled by host!", 2)
+			djui_popup_create(translate("guest_deletion_disabled"), 2)
 		end
 		return
 	end
@@ -1868,12 +1868,12 @@ local function handle_object_deletion(m)
 			-- if m.playerIndex == 0 then
 			--     djui_popup_create("\\#ffff00\\Deleted nearest object", 0.5)
 			-- end
-			djui_popup_create("\\#ffff00\\Deleted nearest object", 0.5)
+			djui_popup_create(translate("deleted_nearest_object"), 0.5)
 		else
 			-- if m.playerIndex == 0 then
 			--     djui_popup_create("No nearby object found", 0.5)
 			-- end
-			djui_popup_create("No nearby object found", 0.5)
+			djui_popup_create(translate("no_nearby_object"), 0.5)
 		end
 
 		-- No cooldown when only one player connected (the host)
@@ -2270,14 +2270,14 @@ function clearall()
 		obj_mark_for_deletion(obj)
 	end
 
-	djui_popup_create("\\#44ff44\\All spawned objects deleted!", 2)
+	djui_popup_create(translate("all_spawned_objects_deleted"), 2)
 
 	return true
 end
 
 hook_chat_command("clearall", "Delete all spawned objects on this map", function(unused)
 	if not network_is_server() then
-		djui_popup_create("\\#ff4444\\Only the host can clear all objects!", 2)
+		djui_popup_create(translate("only_host_clear_objects"), 2)
 		return true
 	end
 

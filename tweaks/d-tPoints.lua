@@ -73,6 +73,4 @@ function TPM.reset_points()
 	save_points()
 end
 
-hook_event(HOOK_ON_SYNC_VALID, TPM.load_points)
-
 return TPM

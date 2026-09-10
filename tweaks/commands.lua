@@ -10,9 +10,7 @@ hook_chat_command("reset_wins", "Resets your wins and minigame wins. (DONT DO TH
 
 function end_round()
 	if not network_is_server() and not network_is_moderator() then
-		djui_chat_message_create(
-			"\\#ff5050\\You have permission to perform this command... or DO you?\n(No, you don't have moderator)"
-		)
+		djui_chat_message_create(translate("no_moderator_permission"))
 		return
 	end
 	gGlobalSyncTable.gameState = GAME_STATE_MINI_END
@@ -21,7 +19,7 @@ end
 hook_chat_command("end", "Ends the round", end_round)
 
 function download_link()
-	djui_chat_message_create("\\#00ffff\\Download link: \\#ffffff\\https://github.com/georgegabrdev/Drench-Game-DX")
+	djui_chat_message_create(translate("download_link") .. "https://github.com/georgegabrdev/Drench-Game-DX")
 end
 
 hook_chat_command("download", "Provides a link to download the mod", download_link)

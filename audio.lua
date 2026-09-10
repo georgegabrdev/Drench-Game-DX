@@ -128,9 +128,6 @@ soundData = {
 	playerCallout2 = audio_sample_load("sound-mingle-callout-2.ogg"),
 	playerCallout3 = audio_sample_load("sound-mingle-callout-3.ogg"),
 	playerCallout4 = audio_sample_load("sound-mingle-callout-4.ogg"),
-	select_menu = audio_sample_load("sound-select_menu.ogg"),
-	nuclearbomb = audio_sample_load("sound-nuclearbomb.ogg"),
-	explosion = audio_sample_load("sound-explosion.ogg"),
 }
 
 -- set current streamed music and update volume
@@ -300,7 +297,7 @@ end
 function test_loop_point()
 	local thisMusic = musicData[currentMusic]
 	if (not (thisMusic and thisMusic.loopEnd)) or thisMusic.loopEnd == -1 then
-		djui_chat_message_create("No point to test...")
+		djui_chat_message_create(translate("no_loop_point"))
 		return true
 	end
 	-- set 3 seconds before loop?
