@@ -1157,7 +1157,10 @@ GAME_MODE_DATA = {
 				table.remove(aliveTable, 1)
 				sheriffToAssign = 0
 			end
-			spawn_sync_object(id_bhvSheriffSuit, E_MODEL_HEART, 0, 250, 0, nil)
+			if gGlobalSyncTable.sheriffDied == true and gGlobalSyncTable.sheriffHeartSpawned ~= true then
+				spawn_sync_object(id_bhvSheriffSuit, E_MODEL_HEART, 0, 250, 0, nil)
+				gGlobalSyncTable.sheriffHeartSpawned = true
+			end
 		end,
 		allowPvpFunc = function(attacker, victim, interaction)
 			local sAttacker = gPlayerSyncTable[attacker.playerIndex]
@@ -1177,6 +1180,9 @@ GAME_MODE_DATA = {
 			end
 			if sAttacker.murderIsMurderer and not sVictim.murderIsMurderer then
 				eliminate_mario(victim)
+				if sVictim.murderIsSheriff then
+					gGlobalSyncTable.sheriffDied = true
+				end
 				return true
 			end
 			return true
@@ -1221,6 +1227,104 @@ GAME_MODE_DATA = {
 				return
 			end
 			return "Sheriff", false, true
+		end,
+	},
+	[GAME_MODE_SIMON] = {
+		name = translate("game_simon"),
+		desc = translate("desc_simon"),
+		level = LEVEL_KOOPA_KEEP,
+		music = "dire",
+		interact = PLAYER_INTERACTIONS_NONE,
+		firstRoundTime = 1350,
+		roundTime = 900,
+		maxRounds = 5,
+		doEliminationPoints = true,
+		autoElimination = true,
+
+		marioUpdateFunc = function(m)
+			local GSC = gGlobalSyncTable
+
+			if GSC.roundTimer > 0 then
+				for var = 1, 35 do
+					if GSC.roundTimer == 6 * var * 30 then
+						play_sound(SOUND_ACTION_CLIMB_UP_TREE, gGlobalSoundSource)
+
+						local commands = {
+							translate("simon_jump"),
+							translate("simon_attack"),
+							translate("simon_dont_move"),
+							translate("simon_walk"),
+							translate("simon_lava"),
+							translate("simon_ledge"),
+							translate("simon_run"),
+							translate("simon_backflip"),
+						}
+
+						djui_chat_message_create(translate("simon") .. commands[GSC.simonSays])
+					end
+				end
+			end
+
+			if GSC.round == 1 and GSC.roundTimer == 1 then
+				djui_popup_create(translate("simon_connected"), 1)
+
+				local commands = {
+					translate("simon_jump"),
+					translate("simon_attack"),
+					translate("simon_dont_move"),
+					translate("simon_walk"),
+					translate("simon_lava"),
+					translate("simon_ledge"),
+					translate("simon_run"),
+					translate("simon_backflip"),
+				}
+
+				djui_chat_message_create(translate("simon") .. commands[GSC.simonSays])
+			end
+
+			if m.playerIndex ~= 0 then
+				return
+			end
+
+			m.health = 2176
+			m.hurtCounter = 0
+			sonic_set_full_rings(m.playerIndex)
+
+			local sMario = gPlayerSyncTable[m.playerIndex]
+
+			if GSC.simonSays == 1 and m.pos.y > m.floorHeight then
+				sMario.roundScore = sMario.roundScore + 1
+				play_sound(SOUND_GENERAL_COIN, gGlobalSoundSource)
+			elseif GSC.simonSays == 2 and m.action & ACT_FLAG_ATTACKING ~= 0 then
+				sMario.roundScore = sMario.roundScore + 1
+				play_sound(SOUND_GENERAL_COIN, gGlobalSoundSource)
+			elseif GSC.simonSays == 3 and m.action == ACT_IDLE then
+				sMario.roundScore = sMario.roundScore + 1
+				play_sound(SOUND_GENERAL_COIN, gGlobalSoundSource)
+			elseif GSC.simonSays == 4 and m.action == ACT_WALKING then
+				sMario.roundScore = sMario.roundScore + 1
+				play_sound(SOUND_GENERAL_COIN, gGlobalSoundSource)
+			elseif GSC.simonSays == 5 and m.action == ACT_LAVA_BOOST then
+				sMario.roundScore = sMario.roundScore + 1
+				play_sound(SOUND_GENERAL_COIN, gGlobalSoundSource)
+			elseif GSC.simonSays == 6 and m.action == ACT_LEDGE_GRAB then
+				sMario.roundScore = sMario.roundScore + 1
+				play_sound(SOUND_GENERAL_COIN, gGlobalSoundSource)
+			elseif GSC.simonSays == 7 and m.forwardVel > 35 then
+				sMario.roundScore = sMario.roundScore + 1
+				play_sound(SOUND_GENERAL_COIN, gGlobalSoundSource)
+			elseif GSC.simonSays == 8 and m.action == ACT_BACKFLIP then
+				sMario.roundScore = sMario.roundScore + 1
+				play_sound(SOUND_GENERAL_COIN, gGlobalSoundSource)
+			end
+		end,
+
+		hostUpdateFunc = function()
+			for var = 1, 35 do
+				if gGlobalSyncTable.roundTimer == 6 * var * 30 - 5 then
+					gGlobalSyncTable.simonSays = math.random(1, 8)
+				end
+			end
 		end,
 	},
 	[GAME_MODE_FIERY] = {

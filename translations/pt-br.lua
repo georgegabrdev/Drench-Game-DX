@@ -281,6 +281,7 @@ return {
 	game_coin_rain = "Chuva de Moedas",
 	game_death_hit = "Golpe Mortal",
 	game_murder = "Mistério do Assassinato",
+	game_simon = "Simão Diz",
 	game_fiery = "Chuva de Meteoros Flamejantes",
 	game_balloon_madness = "Loucura dos Balões",
 	game_hot_ring = "Anel Quente",

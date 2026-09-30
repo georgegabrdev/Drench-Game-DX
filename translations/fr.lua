@@ -281,6 +281,7 @@ return {
 	game_coin_rain = "Pluie de Pièces",
 	game_death_hit = "Coup Mortel",
 	game_murder = "Mystère du Meurtre",
+	game_simon = "Simon dit",
 	game_fiery = "Pluie de Météores Ardents",
 	game_balloon_madness = "Folie des Ballons",
 	game_hot_ring = "Anneau Brûlant",

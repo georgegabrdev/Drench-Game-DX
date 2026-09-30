@@ -270,6 +270,7 @@ return {
 	game_coin_rain = "Lluvia de Monedas",
 	game_death_hit = "Golpe Mortal",
 	game_murder = "Misterio del Asesinato",
+	game_simon = "Simón Dice",
 	game_fiery = "Caída de Meteoritos Ardientes",
 	game_balloon_madness = "Locura de Globos",
 	game_hot_ring = "Anillo Caliente",

@@ -280,6 +280,7 @@ return {
 	game_coin_rain = "Coin Rain",
 	game_death_hit = "Death Hit",
 	game_murder = "Murder Mystery",
+	game_simon = "Simon Says",
 	game_fiery = "Fiery Meteor Falls",
 	game_balloon_madness = "Balloon Madness",
 	game_hot_ring = "Hot Ring",
