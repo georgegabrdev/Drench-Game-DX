@@ -138,9 +138,6 @@ local function show_holiday_popup()
 	if holidayEvent == HOLIDAYS.NONE then
 		return
 	end
-	if holidayEvent == HOLIDAYS.PRIDE_MONTH then
-		return
-	end
 
 	local message = "???"
 
