@@ -1327,7 +1327,8 @@ GAME_MODE_DATA = {
 			end
 		end,
 	},
-	[GAME_MODE_FIERY] = {
+	-- removed until further notice
+	--[[[GAME_MODE_FIERY] = {
 		name = translate("game_fiery"),
 		desc = translate("desc_fiery"),
 		level = LEVEL_BOWSER_2,
@@ -1365,7 +1366,7 @@ GAME_MODE_DATA = {
 				end
 			end
 		end,
-	},
+	},]]
 	[GAME_MODE_BALLOON_MADNESS] = {
 		name = translate("game_balloon_madness"),
 		desc = translate("desc_balloon_madness"),

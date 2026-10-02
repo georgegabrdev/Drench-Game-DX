@@ -1,4 +1,4 @@
--- name: \\#00ffff\\Drench Game DX v1.3.3
+-- name: \\#00ffff\\Drench Game DX v1.3.3.1
 -- description: Squid Game in Mario 64!\n\nCommissioned by Drenchy\nInspired by Dani's \"Crab Game\"\n\nProgramming: EmilyEmmi\n\nMaps: biobak, EmilyEmmi, Woissil\n\nSoundtrack: murioz, Awesome Seal Guy (YT)\n\nVoice Acting:\nEspi as Toad\nSqueex as Mingle Callout\nTrashcam as Waluigi\n\nAds: Squeex's Community\n\nSpecial Thanks: Squishy
 -- category: gamemode
 -- incompatible: gamemode
@@ -25,12 +25,11 @@ GAME_MODE_COIN_RAIN = 8
 GAME_MODE_DEATH_HIT = 9
 GAME_MODE_MURDER = 10
 GAME_MODE_SIMON = 11
-GAME_MODE_FIERY = 12
-GAME_MODE_BALLOON_MADNESS = 13
-GAME_MODE_HOT_RING = 14
-GAME_MODE_FREEZE_TAG = 15
-GAME_MODE_DUEL = 16 -- needs to be at the end due to its special nature
-GAME_MODE_MAX = 17
+GAME_MODE_BALLOON_MADNESS = 12
+GAME_MODE_HOT_RING = 13
+GAME_MODE_FREEZE_TAG = 14
+GAME_MODE_DUEL = 15 -- needs to be at the end due to its special nature
+GAME_MODE_MAX = 16
 
 TEAM_SELECTION_RANDOM = 0
 TEAM_SELECTION_HOST = 1
@@ -263,6 +262,12 @@ hook_event(HOOK_ON_LEVEL_INIT, starting_setup)
 hook_event(HOOK_ON_SYNC_VALID, WI.load_wins)
 hook_event(HOOK_ON_SYNC_VALID, MWI.load_m_wins)
 hook_event(HOOK_ON_SYNC_VALID, TPM.load_points)
+hook_on_sync_table_change(gPlayerSyncTable[0], "totalPoints", "totalPoints", function(tag, oldVal, newVal)
+	if newVal == nil or oldVal == newVal then
+		return
+	end
+	TPM.save_points()
+end)
 
 function is_modifier_active(bit)
 	return (gGlobalSyncTable.activeModifiersBitfield & bit) ~= 0
@@ -1123,16 +1128,6 @@ function update()
 		end
 	end
 
-	-- add earned points
-	if not gGlobalSyncTable.eliminationMode and not countedPoints then
-		local sMario = gPlayerSyncTable[0]
-
-		if sMario.earnedPoints and sMario.earnedPoints ~= 0 then
-			countedPoints = true
-			TPM.add_points(sMario.earnedPoints)
-		end
-	end
-
 	if not network_is_server() then
 		return
 	end
@@ -1461,6 +1456,18 @@ function update()
 			gGlobalSyncTable.gameState = GAME_STATE_SCORES
 			gGlobalSyncTable.roundTimer = 0
 			gGlobalSyncTable.round = 1
+
+			if not gGlobalSyncTable.eliminationMode then
+				for_each_connected_player(function(i)
+					local sMario = gPlayerSyncTable[i]
+					if sMario.multiplier and sMario.multiplier ~= 1 then
+						sMario.earnedPoints = math.ceil((sMario.earnedPoints or 0) * sMario.multiplier)
+					end
+					local earned = math.max(0, sMario.earnedPoints or 0)
+					sMario.points = (sMario.points or 0) + earned
+					sMario.totalPoints = (sMario.totalPoints or 0) + earned
+				end)
+			end
 		end
 	elseif gGlobalSyncTable.gameState == GAME_STATE_SCORES then
 		gGlobalSyncTable.gameTimer = gGlobalSyncTable.gameTimer + 1
@@ -2281,3 +2288,4 @@ require("spawn-objects")
 require("./tweaks/z_destroyObjects")
 require("./tweaks/commands")
 require("./tweaks/death-messages")
+require("./tweaks/holidays")

@@ -17,7 +17,7 @@ local function save_points()
 
 	local points = gPlayerSyncTable[0].totalPoints
 	local obfuscated = points ~ SECRET
-	local checksum = (points + CHECK) ~ SECRET
+	local checksum = ((points + CHECK) % 0x7FFFFFFF) ~ SECRET
 
 	file:write_integer(obfuscated, INT_TYPE_S32)
 	file:write_integer(checksum, INT_TYPE_S32)
@@ -61,10 +61,15 @@ function TPM.load_points()
 end
 
 function TPM.add_points(amount)
-	gPlayerSyncTable[0].totalPoints = (gPlayerSyncTable[0].totalPoints or 0) + (amount or 1)
+	amount = math.max(0, amount or 0)
+	if amount == 0 then
+		return
+	end
+	gPlayerSyncTable[0].totalPoints = (gPlayerSyncTable[0].totalPoints or 0) + amount
+	save_points()
+end
 
-	print("Added points, total:", gPlayerSyncTable[0].totalPoints)
-
+function TPM.save_points()
 	save_points()
 end
 

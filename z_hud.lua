@@ -295,7 +295,7 @@ local function create_menu_data()
 				function()
 					enter_menu(8)
 				end,
-				true,
+				false,
 			},
 			{
 				translate("spectate_text"),
