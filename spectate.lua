@@ -2,8 +2,12 @@
 ACT_SPECTATE = allocate_mario_action(ACT_GROUP_CUTSCENE | ACT_FLAG_INTANGIBLE)
 
 spectatedPlayer = 0
+spectateStar = false
 local lastDir = 0
 local lastDirTime = 0
+local function get_spectate_star()
+	return obj_get_first_with_behavior_id(id_bhvStealStar)
+end
 function act_spectate(m)
 	m.marioObj.header.gfx.node.flags = m.marioObj.header.gfx.node.flags | GRAPH_RENDER_INVISIBLE
 	m.health = 0x880
@@ -26,8 +30,18 @@ function act_spectate(m)
 
 	-- allow switching; auto switch if our player is invalid
 	local specM = gMarioStates[spectatedPlayer]
+	local star = get_spectate_star()
 	local change = 0
-	if spectatedPlayer == 0 or is_player_active(specM) == 0 or specM.action == ACT_SPECTATE then
+	if spectateStar then
+		if star == nil then
+			spectateStar = false
+			spectatedPlayer = 0
+			change = 1
+
+			lastDirTime = 15
+			m.actionTimer = 15
+		end
+	elseif spectatedPlayer == 0 or is_player_active(specM) == 0 or specM.action == ACT_SPECTATE then
 		change = 1
 		lastDirTime = 15
 		m.actionTimer = 15

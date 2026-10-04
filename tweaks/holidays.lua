@@ -158,7 +158,7 @@ local function show_holiday_popup()
 			"Happy \\#ff0000\\P\\#ff7f00\\r\\#ffff00\\i\\#00ff00\\d\\#00ffff\\e \\#0000ff\\M\\#8b00ff\\o\\#ff0000\\n\\#ff7f00\\t\\#ffff00\\h!"
 	end
 
-	create_warning_popup(message)
+	create_warning_local(message)
 	holidayPopup = true
 end
 

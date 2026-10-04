@@ -231,8 +231,10 @@ return {
 	modifiers_title = "\\#ffff50\\MODIFICADORES",
 
 	-- Credits
+	credits = "Créditos",
 	creator = "Creador",
 	minigames = "Minijuegos",
+	code = "Código",
 	ideas = "Ideas",
 
 	-- Audio

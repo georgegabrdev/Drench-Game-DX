@@ -4,22 +4,25 @@ local MWI = require("c-mWins")
 function on_chat_message(msg)
 	WI.reset_wins()
 	MWI.reset_m_wins()
+	return true
 end
 
 hook_chat_command("reset_wins", "Resets your wins and minigame wins. (DONT DO THIS)", on_chat_message)
 
-function end_round()
+function end_round(msg)
 	if not network_is_server() and not network_is_moderator() then
 		djui_chat_message_create(translate("no_moderator_permission"))
 		return
 	end
 	gGlobalSyncTable.gameState = GAME_STATE_MINI_END
+	return true
 end
 
 hook_chat_command("end", "Ends the round", end_round)
 
 function download_link()
 	djui_chat_message_create(translate("download_link") .. "https://github.com/georgegabrdev/Drench-Game-DX")
+	return true
 end
 
 hook_chat_command("download", "Provides a link to download the mod", download_link)

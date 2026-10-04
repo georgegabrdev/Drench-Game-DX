@@ -229,8 +229,10 @@ return {
 	modifiers_title = "\\#ffff50\\MODIFIERS",
 
 	-- Credits
+	credits = "Credits",
 	creator = "Creator",
 	minigames = "Minigames",
+	code = "Code",
 	ideas = "Ideas",
 
 	-- Audio
@@ -250,7 +252,7 @@ return {
 	progress_restored = "\\#ffff50\\Your progress was restored!",
 	moderator_pick = "\\#ffff50\\Since you're the first moderator available, you will pick this minigame!",
 	killed_player_heal = "\\#ffff50\\You killed ",
-	got_full_heal = "!\\n\\#ffff50\\Got a full heal!",
+	got_full_heal = "!\n\\#ffff50\\Got a full heal!",
 	killed_player = "\\#ffff50\\You killed ",
 	killed_suffix = "!",
 	correcting_desync = "Attempting to correct desync...",

@@ -5,8 +5,6 @@ E_MODEL_LOCK_SWITCH = smlua_model_util_get_id("lockswitch_geo")
 E_MODEL_MINGLE_DOOR = smlua_model_util_get_id("mingleDoor_geo")
 E_MODEL_KOTH_AREA = smlua_model_util_get_id("kothArea_geo")
 E_MODEL_LASER = smlua_model_util_get_id("laser_geo")
--- shocklingly, ok you know its from uh kart battles
-E_MODEL_BALLOON = smlua_model_util_get_id("balloon_geo")
 
 ---@param o Object
 function button_init(o)
@@ -701,6 +699,7 @@ function sheriff_suit_loop(o)
 			local sMario = gPlayerSyncTable[m.playerIndex]
 			if sMario.murderIsMurderer == false and sMario.murderIsSheriff == false then
 				sMario.murderIsSheriff = true
+				gGlobalSyncTable.sheriffHeartSpawned = false
 				gGlobalSyncTable.sheriffDied = false
 				cur_obj_change_action(1)
 			end
@@ -709,58 +708,6 @@ function sheriff_suit_loop(o)
 end
 
 id_bhvSheriffSuit = hook_behavior(nil, OBJ_LIST_LEVEL, false, sheriff_suit_init, sheriff_suit_loop, "bhvSheriffSuit")
-
----@param o Object
-function balloon_init(o)
-	o.oFlags = OBJ_FLAG_UPDATE_GFX_POS_AND_ANGLE
-	cur_obj_disable_rendering()
-end
-
----@param o Object
-function balloon_loop(o)
-	if gGlobalSyncTable.gameMode ~= GAME_MODE_BALLOON_MADNESS then
-		cur_obj_disable_rendering()
-		return
-	end
-
-	local player = o.oBehParams >> 8
-	local balloon = o.oBehParams & 0xFF
-
-	if player < 0 or player >= MAX_PLAYERS then
-		cur_obj_disable_rendering()
-		return
-	end
-
-	local m = gMarioStates[player]
-	local sMario = gPlayerSyncTable[player]
-
-	if is_player_active(m) == 0 or sMario.eliminated or sMario.balloons < balloon then
-		cur_obj_disable_rendering()
-		return
-	end
-
-	cur_obj_enable_rendering()
-
-	local offset = 0
-	if balloon == 1 then
-		offset = -35
-	elseif balloon == 2 then
-		offset = 0
-	else
-		offset = 35
-	end
-
-	local s = sins(m.faceAngle.y)
-	local c = coss(m.faceAngle.y)
-
-	o.oPosX = m.pos.x + c * offset
-	o.oPosY = m.pos.y + 260 + math.sin(o.oTimer * 0.15) * 8
-	o.oPosZ = m.pos.z - s * offset
-
-	o.oFaceAngleYaw = o.oFaceAngleYaw + 0x400
-end
-
-id_bhvBalloon = hook_behavior(nil, OBJ_LIST_GENACTOR, false, balloon_init, balloon_loop, "bhvBalloon")
 
 -- bombs that appear above players' heads in Bomb Tag
 ---@param o Object

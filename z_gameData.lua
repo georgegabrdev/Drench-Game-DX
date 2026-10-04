@@ -1120,46 +1120,59 @@ GAME_MODE_DATA = {
 		hostUpdateFunc = function()
 			if gGlobalSyncTable.murdererDied == true then
 				local gData = GAME_MODE_DATA[gGlobalSyncTable.gameMode or 0]
+
 				if gGlobalSyncTable.gameTimer < gData.roundTime * gData.maxRounds - 60 then
 					gGlobalSyncTable.gameTimer = gGlobalSyncTable.gameTimer + 30
 				end
 			end
+
+			if gGlobalSyncTable.sheriffDied == true and gGlobalSyncTable.sheriffHeartSpawned ~= true then
+				spawn_sync_object(id_bhvSheriffSuit, E_MODEL_HEART, 0, 250, 0, nil)
+
+				gGlobalSyncTable.sheriffHeartSpawned = true
+				gGlobalSyncTable.sheriffDied = false
+			end
+
 			if gGlobalSyncTable.roundTimer ~= 1 then
 				return
 			end
+
 			if gGlobalSyncTable.round ~= 1 then
 				return
 			end
+
 			local aliveTable = {}
+
 			for_each_connected_player(function(i)
 				local sMario = gPlayerSyncTable[i]
+
 				if not sMario.eliminated then
 					sMario.murderIsMurderer = false
 					sMario.murderIsSheriff = false
 					table.insert(aliveTable, i)
 				end
 			end)
+
 			local murdererToAssign = 1
 			local sheriffToAssign = 1
+
 			for i = #aliveTable, 2, -1 do
 				local j = math.random(i)
 				aliveTable[i], aliveTable[j] = aliveTable[j], aliveTable[i]
 			end
+
 			while murdererToAssign ~= 0 and #aliveTable ~= 0 do
 				local index = aliveTable[1]
 				gPlayerSyncTable[index].murderIsMurderer = true
 				table.remove(aliveTable, 1)
 				murdererToAssign = 0
 			end
+
 			while sheriffToAssign ~= 0 and murdererToAssign == 0 and #aliveTable ~= 0 do
 				local index = aliveTable[1]
 				gPlayerSyncTable[index].murderIsSheriff = true
 				table.remove(aliveTable, 1)
 				sheriffToAssign = 0
-			end
-			if gGlobalSyncTable.sheriffDied == true and gGlobalSyncTable.sheriffHeartSpawned ~= true then
-				spawn_sync_object(id_bhvSheriffSuit, E_MODEL_HEART, 0, 250, 0, nil)
-				gGlobalSyncTable.sheriffHeartSpawned = true
 			end
 		end,
 		allowPvpFunc = function(attacker, victim, interaction)
@@ -1179,10 +1192,14 @@ GAME_MODE_DATA = {
 				return true
 			end
 			if sAttacker.murderIsMurderer and not sVictim.murderIsMurderer then
-				eliminate_mario(victim)
 				if sVictim.murderIsSheriff then
+					gGlobalSyncTable.sheriffDPosX = victim.pos.x
+					gGlobalSyncTable.sheriffDPosY = victim.pos.y
+					gGlobalSyncTable.sheriffDPosZ = victim.pos.z
 					gGlobalSyncTable.sheriffDied = true
 				end
+
+				eliminate_mario(victim)
 				return true
 			end
 			return true
@@ -1242,6 +1259,10 @@ GAME_MODE_DATA = {
 		autoElimination = true,
 
 		marioUpdateFunc = function(m)
+			if m.playerIndex ~= 0 then
+				return
+			end
+
 			local GSC = gGlobalSyncTable
 
 			if GSC.roundTimer > 0 then
@@ -1280,10 +1301,6 @@ GAME_MODE_DATA = {
 				}
 
 				djui_chat_message_create(translate("simon") .. commands[GSC.simonSays])
-			end
-
-			if m.playerIndex ~= 0 then
-				return
 			end
 
 			m.health = 2176
@@ -1367,103 +1384,6 @@ GAME_MODE_DATA = {
 			end
 		end,
 	},]]
-	[GAME_MODE_BALLOON_MADNESS] = {
-		name = translate("game_balloon_madness"),
-		desc = translate("desc_balloon_madness"),
-		level = { LEVEL_TOAD_TOWN, LEVEL_KOOPA_KEEP, LEVEL_LIGHTS_OUT, LEVEL_DS_FORT },
-		interact = PLAYER_INTERACTIONS_PVP, -- so invulnerability frames exist
-		kbStrength = 15,
-		music = "quick",
-		maxTime = 300 * 30, -- 5 minutes max
-		fasterActions = true,
-		doEliminationPoints = true,
-
-		startingSetup = function()
-			for i = 0, MAX_PLAYERS - 1 do
-				gPlayerSyncTable[i].balloons = 3
-				for balloon = 1, 3 do
-					spawn_object_no_rotate(id_bhvBalloon, E_MODEL_BALLOON, 0, 0, 0, function(o)
-						o.oBehParams = (i << 8) | balloon
-					end, false)
-				end
-			end
-		end,
-
-		hostUpdateFunc = function()
-			local alivePlayers = 0
-			for_each_connected_player(function(index)
-				local sMario = gPlayerSyncTable[index]
-				if not sMario.eliminated then
-					alivePlayers = alivePlayers + 1
-				end
-			end)
-			if alivePlayers <= 1 then
-				return true
-			end
-		end,
-
-		marioUpdateFunc = function(m) -- full health, no incidental deaths
-			m.health = 0x880
-			sonic_set_full_rings(m.playerIndex)
-		end,
-
-		onPvpFunc = function(attacker, victim, interaction)
-			local sVictim = gPlayerSyncTable[victim.playerIndex]
-			local sAttacker = gPlayerSyncTable[attacker.playerIndex]
-
-			victim.hurtCounter = 0
-			attacker.hurtCounter = 0
-
-			if sVictim.team == 0 or sAttacker.team ~= sVictim.team then
-				if sVictim.balloons and sVictim.balloons > 0 then
-					sVictim.balloons = sVictim.balloons - 1
-					play_sound(SOUND_GENERAL_BOING1, gGlobalSoundSource) -- pop
-
-					if attacker.playerIndex == 0 then
-						djui_chat_message_create(
-							string.format(
-								translate("balloon_popped_other"),
-								gNetworkPlayers[victim.playerIndex].name,
-								sVictim.balloons
-							)
-						)
-					end
-					if victim.playerIndex == 0 and attacker.playerIndex ~= 0 then
-						djui_chat_message_create(string.format(translate("balloon_popped_self"), sVictim.balloons))
-					end
-
-					victim.invincTimer = 30 -- brief mercy invuln after a pop
-
-					if sVictim.balloons <= 0 then
-						eliminate_mario(victim)
-					end
-				end
-			end
-		end,
-
-		rejoinFunc = function(sMario) -- mid-round joiners get full balloons back
-			if sMario.balloons == nil or sMario.balloons <= 0 then
-				sMario.balloons = 3
-			end
-		end,
-
-		descFunc = function(index)
-			if gGlobalSyncTable.gameState ~= GAME_STATE_ACTIVE then
-				return
-			end
-			local sMario = gPlayerSyncTable[index]
-			if sMario.eliminated then
-				return
-			end
-			return tostring(sMario.balloons or 0), false, true -- desc, highlight, yellow
-		end,
-
-		hudRenderFunc = function(screenWidth, screenHeight, sideBarLines, lengthLimit)
-			local sMario = gPlayerSyncTable[gMarioStates[0].playerIndex]
-			add_line_to_table(sideBarLines, string.format("\\#7ad3ff\\Balloons: %d", sMario.balloons or 0), lengthLimit)
-			return true
-		end,
-	},
 	[GAME_MODE_HOT_RING] = {
 		name = translate("game_hot_ring"),
 		desc = translate("desc_hot_ring"),
@@ -1473,10 +1393,11 @@ GAME_MODE_DATA = {
 		doPlacementPoints = true,
 		showHealth = true,
 		music = "stealth",
-		maxTime = 1 * 60 * 30,
+		maxTime = 2 * 60 * 30,
 		marioUpdateFunc = function(m)
 			local minRadius = 1200
-			local radius = math.max(minRadius, 9000 - gGlobalSyncTable.gameTimer * 9)
+			local hotRingTimer = gGlobalSyncTable.gameTimer or 0
+			local radius = math.max(minRadius, 9000 - hotRingTimer * 5)
 			local dist = math.sqrt(m.pos.x * m.pos.x + m.pos.z * m.pos.z)
 
 			if dist > radius then
@@ -1495,8 +1416,7 @@ GAME_MODE_DATA = {
 		interact = PLAYER_INTERACTIONS_PVP, -- so invulnerability frames exist
 		kbStrength = 0, -- tags shouldn't knock people around
 		music = "quick",
-		roundTime = 60 * 30, -- 1 minute rounds
-		maxRounds = 5,
+		maxTime = 2 * 60 * 30,
 		doEliminationPoints = true,
 		fasterActions = true,
 
@@ -1583,7 +1503,7 @@ GAME_MODE_DATA = {
 					end
 				end)
 
-				local taggers = math.max(1, #alive // 4)
+				local taggers = math.max(1, math.ceil(#alive / 2))
 
 				for t = 1, taggers do
 					if #alive == 0 then

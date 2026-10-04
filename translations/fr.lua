@@ -230,8 +230,10 @@ return {
 	selected = "Sélectionné ",
 
 	-- Credits
+	credits = "Crédits",
 	creator = "Créateur",
 	minigames = "Minijeux",
+	code = "Code",
 	ideas = "Idées",
 
 	-- Audio

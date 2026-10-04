@@ -1,4 +1,4 @@
--- name: \\#00ffff\\Drench Game DX v1.3.3.1
+-- name: \\#00ffff\\Drench Game DX v1.3.3.2 \\#000000\\[WIP]
 -- description: Squid Game in Mario 64!\n\nCommissioned by Drenchy\nInspired by Dani's \"Crab Game\"\n\nProgramming: EmilyEmmi\n\nMaps: biobak, EmilyEmmi, Woissil\n\nSoundtrack: murioz, Awesome Seal Guy (YT)\n\nVoice Acting:\nEspi as Toad\nSqueex as Mingle Callout\nTrashcam as Waluigi\n\nAds: Squeex's Community\n\nSpecial Thanks: Squishy
 -- category: gamemode
 -- incompatible: gamemode
@@ -25,11 +25,10 @@ GAME_MODE_COIN_RAIN = 8
 GAME_MODE_DEATH_HIT = 9
 GAME_MODE_MURDER = 10
 GAME_MODE_SIMON = 11
-GAME_MODE_BALLOON_MADNESS = 12
-GAME_MODE_HOT_RING = 13
-GAME_MODE_FREEZE_TAG = 14
-GAME_MODE_DUEL = 15 -- needs to be at the end due to its special nature
-GAME_MODE_MAX = 16
+GAME_MODE_HOT_RING = 12
+GAME_MODE_FREEZE_TAG = 13
+GAME_MODE_DUEL = 14 -- needs to be at the end due to its special nature
+GAME_MODE_MAX = 15
 
 TEAM_SELECTION_RANDOM = 0
 TEAM_SELECTION_HOST = 1

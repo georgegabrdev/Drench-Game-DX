@@ -461,17 +461,7 @@ function M.render_main_hud()
 
 			if not spectateStar and gNetworkPlayers[spectatedPlayer] then
 				djui_hud_set_color(0, 0, 0, 128)
-				HU.djui_hud_render_rect_rounded_outlined(
-					rectX,
-					rectY,
-					rectWidth,
-					rectHeight,
-					255,
-					255,
-					255,
-					thickness,
-					128
-				)
+				HU.djui_hud_render_rect_rounded(rectX, rectY, rectWidth, rectHeight, 5)
 			else
 				djui_hud_set_color(0, 0, 0, 128)
 				HU.djui_hud_render_rect_rounded(rectX, rectY, rectWidth, rectHeight, 5)

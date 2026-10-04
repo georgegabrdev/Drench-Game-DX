@@ -252,6 +252,13 @@ local function create_menu_data()
 				end,
 			},
 			{
+				translate("credits"),
+				function()
+					enter_menu(9)
+				end,
+				false,
+			},
+			{
 				translate("team"),
 				function(x)
 					gPlayerSyncTable[0].team = x
@@ -739,6 +746,11 @@ local function create_menu_data()
 				translate("minigames"),
 				function() end,
 				desc = "Drench Game +\nDrench Game v1.2.2 (unofficial)",
+			},
+			{
+				translate("code"),
+				function() end,
+				desc = "Flood +\nCoopWare",
 			},
 			{
 				translate("ideas"),
