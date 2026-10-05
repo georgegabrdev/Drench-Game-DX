@@ -1127,7 +1127,14 @@ GAME_MODE_DATA = {
 			end
 
 			if gGlobalSyncTable.sheriffDied == true and gGlobalSyncTable.sheriffHeartSpawned ~= true then
-				spawn_sync_object(id_bhvSheriffSuit, E_MODEL_HEART, 0, 250, 0, nil)
+				spawn_sync_object(
+					id_bhvSheriffSuit,
+					E_MODEL_HEART,
+					gGlobalSyncTable.sheriffDPosX,
+					gGlobalSyncTable.sheriffDPosY,
+					gGlobalSyncTable.sheriffDPosZ,
+					nil
+				)
 
 				gGlobalSyncTable.sheriffHeartSpawned = true
 				gGlobalSyncTable.sheriffDied = false

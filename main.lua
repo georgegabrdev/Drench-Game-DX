@@ -50,7 +50,6 @@ LEVEL_DS_FORT = level_register("level_fort_entry", COURSE_NONE, "DS Fort", "fort
 LEVEL_STAIR = level_register("level_stair_entry", COURSE_NONE, "Stairway", "stair", 28000, 0x28, 0x28, 0x28)
 LEVEL_DOUGHNUT = level_register("level_doughnut_entry", COURSE_NONE, "Doughnut", "doughnut", 28000, 0x28, 0x28, 0x28)
 gLevelValues.entryLevel = LEVEL_LOBBY
-warp_to_level(LEVEL_LOBBY, 1, 0)
 
 -- team data (copied from Kart Battles)
 -- in order: light color, dark color, full name (+ color code), short name
@@ -270,10 +269,6 @@ end)
 
 function is_modifier_active(bit)
 	return (gGlobalSyncTable.activeModifiersBitfield & bit) ~= 0
-end
-
-if gGlobalSyncTable.autoGame then
-	gGlobalSyncTable.forceStart = true
 end
 
 function sync_setup()
