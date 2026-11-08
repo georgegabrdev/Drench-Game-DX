@@ -1,4 +1,4 @@
--- name: \\#00ffff\\Drench Game DX v1.3.3.2 \\#000000\\[WIP]
+-- name: \\#00ffff\\Drench Game DX v1.3.4 \\#000000\\[WIP]
 -- description: Squid Game in Mario 64!\n\nCommissioned by Drenchy\nInspired by Dani's \"Crab Game\"\n\nProgramming: EmilyEmmi\n\nMaps: biobak, EmilyEmmi, Woissil\n\nSoundtrack: murioz, Awesome Seal Guy (YT)\n\nVoice Acting:\nEspi as Toad\nSqueex as Mingle Callout\nTrashcam as Waluigi\n\nAds: Squeex's Community\n\nSpecial Thanks: Squishy
 -- category: gamemode
 -- incompatible: gamemode
@@ -157,6 +157,345 @@ require("./translations/translation-main")
 local WI = require("./tweaks/b-wins")
 local MWI = require("./tweaks/c-mWins")
 local TPM = require("./tweaks/d-tPoints")
+
+GLOBAL_LEADERBOARD_PACKET = 13
+local GLOBAL_LEADERBOARD_RESET_SECONDS = 14 * 24 * 60 * 60
+local globalLeaderboardFS
+local globalLeaderboardFile
+local globalLeaderboardRecords = {}
+local globalLeaderboardResetAt = 0
+local globalLeaderboardUpdateTimer = 0
+globalLeaderboardEntries = {}
+
+local function global_leaderboard_now()
+	local date = get_date_and_time()
+	local year = date.year
+	local month = date.month + 1
+	local adjustedYear = year
+	if month <= 2 then
+		adjustedYear = adjustedYear - 1
+	end
+	local era = adjustedYear // 400
+	local yearOfEra = adjustedYear - era * 400
+	local adjustedMonth = month
+	if month > 2 then
+		adjustedMonth = month - 3
+	else
+		adjustedMonth = month + 9
+	end
+	local dayOfYear = (153 * adjustedMonth + 2) // 5 + date.day - 1
+	local dayOfEra = yearOfEra * 365 + yearOfEra // 4 - yearOfEra // 100 + dayOfYear
+	local days = era * 146097 + dayOfEra - 719468
+	return days * 86400 + date.hour * 3600 + date.minute * 60 + date.second
+end
+
+local function global_leaderboard_identity(index)
+	local sMario = gPlayerSyncTable[index]
+	local coopnetID = get_coopnet_id(index)
+	if coopnetID and tostring(coopnetID) ~= "-1" and tostring(coopnetID) ~= "" then
+		return tostring(coopnetID):gsub("[|\r\n]", " ")
+	end
+	local rejoinID = sMario and sMario.rejoinID
+	if rejoinID and tostring(rejoinID) ~= "-1" and tostring(rejoinID) ~= "" then
+		return tostring(rejoinID):gsub("[|\r\n]", " ")
+	end
+	local name = tostring(gNetworkPlayers[index].name or ""):gsub("[|\r\n]", " ")
+	if name:match("%S") then
+		return "name:" .. name
+	end
+	return nil
+end
+
+local function global_leaderboard_compare(a, b)
+	if a.points ~= b.points then
+		return a.points > b.points
+	elseif a.gameWins ~= b.gameWins then
+		return a.gameWins > b.gameWins
+	elseif a.minigameWins ~= b.minigameWins then
+		return a.minigameWins > b.minigameWins
+	end
+	return a.name:lower() < b.name:lower()
+end
+
+local function global_leaderboard_sort()
+	local sorted = {}
+	for _, entry in pairs(globalLeaderboardRecords) do
+		table.insert(sorted, entry)
+	end
+	table.sort(sorted, global_leaderboard_compare)
+	globalLeaderboardEntries = {}
+	for i = 1, math.min(50, #sorted) do
+		globalLeaderboardEntries[i] = sorted[i]
+	end
+end
+
+local function global_leaderboard_payload(includeAll)
+	local entries = globalLeaderboardEntries
+	if includeAll then
+		entries = {}
+		for _, entry in pairs(globalLeaderboardRecords) do
+			table.insert(entries, entry)
+		end
+		table.sort(entries, global_leaderboard_compare)
+	end
+	local lines = { tostring(globalLeaderboardResetAt) }
+	for _, entry in ipairs(entries) do
+		table.insert(
+			lines,
+			table.concat(
+				{
+					entry.id,
+					entry.name,
+					entry.points,
+					entry.gameWins,
+					entry.minigameWins,
+					entry.lastPoints,
+					entry.lastGameWins,
+					entry.lastMinigameWins,
+				},
+				"|"
+			)
+		)
+	end
+	return table.concat(lines, "\n")
+end
+
+local function global_leaderboard_parse(payload)
+	if type(payload) ~= "string" or payload == "" then
+		return
+	end
+	local lines = {}
+	for line in payload:gmatch("[^\n]+") do
+		table.insert(lines, line)
+	end
+	local resetAt = tonumber(lines[1])
+	if not resetAt then
+		return
+	end
+	local records = {}
+	for i = 2, #lines do
+		local id, name, points, gameWins, minigameWins, lastPoints, lastGameWins, lastMinigameWins =
+			lines[i]:match("^([^|]*)|([^|]*)|([^|]*)|([^|]*)|([^|]*)|([^|]*)|([^|]*)|([^|]*)$")
+		name = name and name:gsub("^%s+", ""):gsub("%s+$", "")
+		if id and id ~= "" and name and name:match("%S") then
+			records[id] = {
+				id = id,
+				name = name,
+				points = tonumber(points) or 0,
+				gameWins = tonumber(gameWins) or 0,
+				minigameWins = tonumber(minigameWins) or 0,
+				lastPoints = tonumber(lastPoints) or 0,
+				lastGameWins = tonumber(lastGameWins) or 0,
+				lastMinigameWins = tonumber(lastMinigameWins) or 0,
+			}
+		end
+	end
+	globalLeaderboardResetAt = resetAt
+	globalLeaderboardRecords = records
+	global_leaderboard_sort()
+end
+
+local function global_leaderboard_save()
+	if not network_is_server() then
+		return
+	end
+	globalLeaderboardFS = globalLeaderboardFS or mod_fs_get() or mod_fs_create()
+	if not globalLeaderboardFS then
+		return
+	end
+	globalLeaderboardFS:set_public(true)
+	globalLeaderboardFile = globalLeaderboardFile
+		or globalLeaderboardFS:get_file("leaderboard.txt")
+		or globalLeaderboardFS:create_file("leaderboard.txt", true)
+	if not globalLeaderboardFile then
+		return
+	end
+	globalLeaderboardFile:set_text_mode(true)
+	globalLeaderboardFile:erase(globalLeaderboardFile.size)
+	globalLeaderboardFile:rewind()
+	globalLeaderboardFile:write_string(global_leaderboard_payload(true))
+	globalLeaderboardFS:save()
+end
+
+local function global_leaderboard_send(target)
+	local packet = { id = GLOBAL_LEADERBOARD_PACKET, payload = global_leaderboard_payload() }
+	if target ~= nil then
+		network_send_to(target, true, packet)
+	else
+		network_send(true, packet)
+	end
+end
+
+local function global_leaderboard_load()
+	if not network_is_server() then
+		return
+	end
+	globalLeaderboardFS = mod_fs_get() or mod_fs_create()
+	if not globalLeaderboardFS then
+		return
+	end
+	globalLeaderboardFS:set_public(true)
+	globalLeaderboardFile = globalLeaderboardFS:get_file("leaderboard.txt")
+		or globalLeaderboardFS:create_file("leaderboard.txt", true)
+	if not globalLeaderboardFile then
+		return
+	end
+	globalLeaderboardFile:set_text_mode(true)
+	globalLeaderboardFile:rewind()
+	local payload = globalLeaderboardFile:read_string()
+	if payload and payload ~= "" then
+		global_leaderboard_parse(payload)
+	end
+	local now = global_leaderboard_now()
+	if
+		globalLeaderboardResetAt == 0
+		or now - globalLeaderboardResetAt >= GLOBAL_LEADERBOARD_RESET_SECONDS
+		or now < globalLeaderboardResetAt
+	then
+		globalLeaderboardRecords = {}
+		globalLeaderboardEntries = {}
+		globalLeaderboardResetAt = now
+		global_leaderboard_save()
+	else
+		global_leaderboard_sort()
+	end
+	global_leaderboard_send()
+end
+
+local function global_leaderboard_update_player(index)
+	if not network_is_server() then
+		return false
+	end
+	local np = gNetworkPlayers[index]
+	if not np then
+		return false
+	end
+	local sMario = gPlayerSyncTable[index]
+	if not sMario then
+		return false
+	end
+	local name = tostring(np.name or ""):gsub("[|\r\n]", " ")
+	name = name:gsub("^%s+", ""):gsub("%s+$", "")
+	if not name:match("%S") then
+		return false
+	end
+	local id = global_leaderboard_identity(index)
+	if not id then
+		return false
+	end
+	local points = math.max(0, tonumber(sMario.totalPoints) or 0)
+	local gameWins = math.max(0, tonumber(sMario.gameWins) or 0)
+	local minigameWins = math.max(0, tonumber(sMario.minigameWins) or 0)
+	local entry = globalLeaderboardRecords[id]
+	if not entry then
+		globalLeaderboardRecords[id] = {
+			id = id,
+			name = name,
+			points = 0,
+			gameWins = 0,
+			minigameWins = 0,
+			lastPoints = points,
+			lastGameWins = gameWins,
+			lastMinigameWins = minigameWins,
+		}
+		return true
+	end
+	local oldName = entry.name
+	local oldPoints = entry.points
+	local oldGameWins = entry.gameWins
+	local oldMinigameWins = entry.minigameWins
+	local oldLastPoints = entry.lastPoints
+	local oldLastGameWins = entry.lastGameWins
+	local oldLastMinigameWins = entry.lastMinigameWins
+	entry.name = name
+	entry.points = entry.points + math.max(0, points - (entry.lastPoints or points))
+	entry.gameWins = entry.gameWins + math.max(0, gameWins - (entry.lastGameWins or gameWins))
+	entry.minigameWins = entry.minigameWins + math.max(0, minigameWins - (entry.lastMinigameWins or minigameWins))
+	if points < (entry.lastPoints or points) then
+		entry.points = entry.points + points
+	end
+	if gameWins < (entry.lastGameWins or gameWins) then
+		entry.gameWins = entry.gameWins + gameWins
+	end
+	if minigameWins < (entry.lastMinigameWins or minigameWins) then
+		entry.minigameWins = entry.minigameWins + minigameWins
+	end
+	entry.lastPoints = points
+	entry.lastGameWins = gameWins
+	entry.lastMinigameWins = minigameWins
+	return oldName ~= entry.name
+		or oldPoints ~= entry.points
+		or oldGameWins ~= entry.gameWins
+		or oldMinigameWins ~= entry.minigameWins
+		or oldLastPoints ~= entry.lastPoints
+		or oldLastGameWins ~= entry.lastGameWins
+		or oldLastMinigameWins ~= entry.lastMinigameWins
+end
+
+local function global_leaderboard_update()
+	if not network_is_server() or globalLeaderboardResetAt == 0 then
+		return
+	end
+	local changed = false
+	local now = global_leaderboard_now()
+	if now < globalLeaderboardResetAt or now - globalLeaderboardResetAt >= GLOBAL_LEADERBOARD_RESET_SECONDS then
+		globalLeaderboardRecords = {}
+		globalLeaderboardEntries = {}
+		globalLeaderboardResetAt = now
+		changed = true
+	end
+	for i = 0, MAX_PLAYERS - 1 do
+		if global_leaderboard_update_player(i) then
+			changed = true
+		end
+	end
+	if changed then
+		global_leaderboard_sort()
+		global_leaderboard_save()
+		global_leaderboard_send()
+	end
+end
+
+function refresh_global_leaderboard()
+	if not network_is_server() then
+		return
+	end
+	global_leaderboard_update()
+	global_leaderboard_send()
+end
+
+local function reset_global_leaderboard()
+	if not network_is_server() then
+		return
+	end
+	globalLeaderboardRecords = {}
+	globalLeaderboardEntries = {}
+	globalLeaderboardResetAt = global_leaderboard_now()
+	global_leaderboard_save()
+	global_leaderboard_send()
+end
+
+function on_packet_global_leaderboard(data)
+	if data.reset then
+		if network_is_server() then
+			reset_global_leaderboard()
+			djui_chat_message_create("Global leaderboard has been completely reset.")
+		end
+		return
+	end
+	if data.request then
+		if network_is_server() then
+			global_leaderboard_send()
+		end
+		return
+	end
+	global_leaderboard_parse(data.payload)
+	if inMenu and reload_menu then
+		reload_menu()
+	end
+end
+
+hook_event(HOOK_ON_SYNC_VALID, global_leaderboard_load)
 
 -- default values for all players
 for i = 0, MAX_PLAYERS - 1 do
@@ -422,6 +761,13 @@ local afkTimer = 0
 local afkSpectator = false
 ---@param m MarioState
 function mario_update(m)
+	if m.playerIndex == 0 and network_is_server() then
+		globalLeaderboardUpdateTimer = globalLeaderboardUpdateTimer + 1
+		if globalLeaderboardUpdateTimer >= 30 then
+			globalLeaderboardUpdateTimer = 0
+			global_leaderboard_update()
+		end
+	end
 	-- run standings at start of mario update
 	if m.playerIndex == 0 then
 		local standings = get_standings_table("roundScore")
@@ -1762,6 +2108,9 @@ hook_event(HOOK_ON_NAMETAGS_RENDER, on_nametags_render)
 ---@param m MarioState
 function on_player_connected(m)
 	rejoin_check[m.playerIndex] = 1
+	if network_is_server() and globalLeaderboardResetAt ~= 0 then
+		global_leaderboard_send(m.playerIndex)
+	end
 	local color = network_get_player_text_color_string(m.playerIndex)
 	local name = gNetworkPlayers[m.playerIndex].name
 
@@ -1787,6 +2136,11 @@ end
 
 ---@param m MarioState
 function on_player_disconnected(m)
+	if network_is_server() and global_leaderboard_update_player(m.playerIndex) then
+		global_leaderboard_sort()
+		global_leaderboard_save()
+		global_leaderboard_send()
+	end
 	if gGlobalSyncTable.gameState == GAME_STATE_LOBBY or gGlobalSyncTable.gameState == GAME_STATE_GAME_END then
 		if network_is_server() then
 			gPlayerSyncTable[m.playerIndex].eliminated = true
@@ -2234,6 +2588,7 @@ PACKET_REQUEST_DESYNC_FIX = 9
 PACKET_DESYNC_FIX = 10
 PACKET_DICE_ROLL = 11
 PACKET_SIMON_COMMAND = 12
+PACKET_GLOBAL_LEADERBOARD = GLOBAL_LEADERBOARD_PACKET
 sPacketTable = {
 	[PACKET_STAR_STEAL] = on_packet_star_steal,
 	[PACKET_MINGLE_CALLOUT] = on_packet_mingle_callout,
@@ -2248,6 +2603,7 @@ sPacketTable = {
 	[PACKET_DESYNC_FIX] = on_packet_desync_fix,
 	[PACKET_DICE_ROLL] = on_packet_dice_roll,
 	[PACKET_SIMON_COMMAND] = on_packet_simon_command,
+	[PACKET_GLOBAL_LEADERBOARD] = on_packet_global_leaderboard,
 }
 
 function on_packet_receive(data)

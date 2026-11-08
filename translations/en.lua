@@ -320,4 +320,5 @@ return {
 	no_nearby_object = "No nearby object found",
 	all_spawned_objects_deleted = "\\#44ff44\\All spawned objects deleted!",
 	only_host_clear_objects = "\\#ff4444\\Only the host can clear all objects!",
+	deathhit_start = "\\#ffff50\\You have 5 seconds to prepare to eliminate anyone.",
 }

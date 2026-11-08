@@ -26,3 +26,20 @@ function download_link()
 end
 
 hook_chat_command("download", "Provides a link to download the mod", download_link)
+
+function reset_global_leaderboard_command(msg)
+	if not network_is_server() and not network_is_moderator() then
+		djui_chat_message_create(translate("no_moderator_permission"))
+		return true
+	end
+	if network_is_server() then
+		reset_global_leaderboard()
+		djui_chat_message_create("Global leaderboard has been completely reset.")
+	else
+		network_send_to(1, true, { id = GLOBAL_LEADERBOARD_PACKET, reset = true })
+		djui_chat_message_create("Global leaderboard reset requested.")
+	end
+	return true
+end
+
+hook_chat_command("resetleaderboard", "Resets the entire global leaderboard.", reset_global_leaderboard_command)

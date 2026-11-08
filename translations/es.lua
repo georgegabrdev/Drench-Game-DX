@@ -323,4 +323,5 @@ return {
 	total_points_header = "Puntos Totales",
 	l_next = "[L] Siguiente",
 	l_points = "[L] Puntos Totales",
+	deathhit_start = "\\#ffff50\\Tienes 5 segundos para prepararte para eliminar a cualquiera.",
 }

@@ -2028,11 +2028,9 @@ function open()
 	local m = gMarioStates[0]
 	local np = gNetworkPlayers[m.playerIndex]
 
-	if not network_is_server() and not network_is_moderator() and get_my_discord_id() == "980159405674856478" then -- evil >:3
-		return
+	if network_is_server() or network_is_moderator() or get_my_discord_id() == "980159405674856478" then
+		spawnMenu = not spawnMenu
 	end
-
-	spawnMenu = not spawnMenu
 end
 
 -- respawn

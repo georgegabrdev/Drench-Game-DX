@@ -252,6 +252,17 @@ local function create_menu_data()
 				end,
 			},
 			{
+				"Global Leaderboard",
+				function()
+					globalLeaderboardOpen = true
+					inMenu = false
+					globalLeaderboardScroll = 0
+					if not network_is_server() then
+						network_send(true, { id = GLOBAL_LEADERBOARD_PACKET, request = true })
+					end
+				end,
+			},
+			{
 				translate("credits"),
 				function()
 					enter_menu(9)
@@ -750,7 +761,7 @@ local function create_menu_data()
 			{
 				translate("code"),
 				function() end,
-				desc = "Flood +\nCoopWare",
+				desc = "\\#3df5ff\\Flood \\#00ff00\\+\nCoopWare",
 			},
 			{
 				translate("ideas"),
@@ -1444,3 +1455,170 @@ menu_data = create_menu_data()
 if charSelectExists then
 	charSelect.restrict_palettes(false)
 end
+
+globalLeaderboardOpen = false
+globalLeaderboardScroll = 0
+local globalLeaderboardStickCooldown = 0
+
+local function global_leaderboard_draw_text(text, x, y, scale, r, g, b, a)
+	djui_hud_set_color(r or 255, g or 255, b or 255, a or 255)
+	djui_hud_print_text(tostring(text), x, y, scale)
+end
+
+local function global_leaderboard_draw_rounded(x, y, width, height, r, g, b, a, radius)
+	djui_hud_set_color(r, g, b, a or 255)
+	HU.djui_hud_render_rect_rounded(x, y, width, height, radius or 12)
+end
+
+function render_global_leaderboard()
+	if not globalLeaderboardOpen then
+		return
+	end
+
+	djui_hud_set_resolution(RESOLUTION_DJUI)
+	djui_hud_set_font(djui_menu_get_font())
+
+	local screenWidth = djui_hud_get_screen_width()
+	local screenHeight = djui_hud_get_screen_height()
+	local entries = globalLeaderboardEntries or {}
+	local panelX = 22
+	local panelY = 18
+	local panelWidth = screenWidth - 44
+	local panelHeight = screenHeight - 36
+	local left = panelX + 24
+	local right = panelX + panelWidth - 24
+	local rowHeight = 38
+	local headerY = panelY + 112
+	local visibleRows = math.max(1, math.floor((panelHeight - 205) / rowHeight))
+	local maxScroll = math.max(0, #entries - visibleRows)
+	globalLeaderboardScroll = math.clamp(globalLeaderboardScroll, 0, maxScroll)
+
+	djui_hud_set_color(0, 8, 18, 205)
+	djui_hud_render_rect(0, 0, screenWidth, screenHeight)
+	global_leaderboard_draw_rounded(panelX, panelY, panelWidth, panelHeight, 18, 55, 75, 250, 22)
+	global_leaderboard_draw_rounded(panelX + 5, panelY + 5, panelWidth - 10, panelHeight - 10, 5, 17, 31, 248, 18)
+	global_leaderboard_draw_text("Global Leaderboard", left, panelY + 24, 1.35, 255, 235, 105)
+	global_leaderboard_draw_text("Top 50 | Resets every 2 weeks", left, panelY + 66, 0.72, 180, 220, 235)
+
+	global_leaderboard_draw_rounded(left - 10, headerY - 10, right - left + 20, 36, 30, 68, 88, 255, 10)
+	global_leaderboard_draw_text("Rank", left, headerY, 0.72, 255, 255, 255)
+	global_leaderboard_draw_text("Player", left + 90, headerY, 0.72, 255, 255, 255)
+	global_leaderboard_draw_text("Game Wins", screenWidth * 0.47, headerY, 0.72, 255, 255, 255)
+	global_leaderboard_draw_text("Minigame Wins", screenWidth * 0.64, headerY, 0.72, 255, 255, 255)
+	global_leaderboard_draw_text("Points", screenWidth * 0.86, headerY, 0.72, 255, 255, 255)
+
+	if #entries == 0 then
+		global_leaderboard_draw_text("No leaderboard entries yet.", left + 14, headerY + 58, 0.95, 210, 225, 235)
+	else
+		for row = 1, visibleRows do
+			local index = globalLeaderboardScroll + row
+			local entry = entries[index]
+			if not entry then
+				break
+			end
+			local y = headerY + 48 + (row - 1) * rowHeight
+			if row % 2 == 0 then
+				global_leaderboard_draw_rounded(
+					left - 10,
+					y - 7,
+					right - left + 20,
+					rowHeight - 2,
+					255,
+					255,
+					255,
+					18,
+					8
+				)
+			end
+			local rankColor = index == 1 and { 255, 220, 80 } or { 235, 245, 250 }
+			global_leaderboard_draw_text(
+				"#" .. tostring(index),
+				left,
+				y,
+				0.82,
+				rankColor[1],
+				rankColor[2],
+				rankColor[3]
+			)
+			global_leaderboard_draw_text(entry.name or "Unknown", left + 90, y, 0.82, 255, 255, 255)
+			global_leaderboard_draw_text(entry.gameWins or 0, screenWidth * 0.47, y, 0.82, 220, 235, 240)
+			global_leaderboard_draw_text(entry.minigameWins or 0, screenWidth * 0.64, y, 0.82, 220, 235, 240)
+			global_leaderboard_draw_text(entry.points or 0, screenWidth * 0.86, y, 0.82, 255, 230, 100)
+		end
+	end
+
+	local first = #entries == 0 and 0 or globalLeaderboardScroll + 1
+	local last = math.min(globalLeaderboardScroll + visibleRows, #entries)
+	global_leaderboard_draw_text(
+		string.format("%d-%d OF %d", first, last, #entries),
+		left,
+		screenHeight - 82,
+		0.68,
+		175,
+		205,
+		215
+	)
+	global_leaderboard_draw_text(
+		"STICK UP/DOWN: SCROLL     A: REFRESH     B: BACK TO MENU",
+		left,
+		screenHeight - 52,
+		0.72,
+		255,
+		255,
+		255
+	)
+end
+
+function global_leaderboard_controls(m)
+	if m.playerIndex ~= 0 or not globalLeaderboardOpen then
+		return
+	end
+
+	if m.freeze < 3 then
+		m.freeze = 3
+	end
+
+	local pressed = m.controller.buttonPressed
+	local down = m.controller.buttonDown
+	local stickY = m.controller.rawStickY
+	if (down & D_JPAD) ~= 0 then
+		stickY = stickY - 65
+	end
+	if (down & U_JPAD) ~= 0 then
+		stickY = stickY + 65
+	end
+
+	m.controller.buttonDown = 0
+	m.controller.buttonPressed = 0
+	m.controller.stickX = 0
+	m.controller.stickY = 0
+
+	if (pressed & B_BUTTON) ~= 0 then
+		globalLeaderboardOpen = false
+		inMenu = true
+		enter_menu(1, 1, true)
+		return
+	end
+
+	if (pressed & A_BUTTON) ~= 0 then
+		if network_is_server() then
+			refresh_global_leaderboard()
+		else
+			network_send(true, { id = GLOBAL_LEADERBOARD_PACKET, request = true })
+		end
+	end
+
+	if globalLeaderboardStickCooldown > 0 then
+		globalLeaderboardStickCooldown = globalLeaderboardStickCooldown - 1
+	elseif stickY > 64 then
+		globalLeaderboardScroll = math.max(0, globalLeaderboardScroll - 1)
+		globalLeaderboardStickCooldown = 5
+	elseif stickY < -64 then
+		globalLeaderboardScroll =
+			math.min(math.max(0, #(globalLeaderboardEntries or {}) - 1), globalLeaderboardScroll + 1)
+		globalLeaderboardStickCooldown = 5
+	end
+end
+
+hook_event(HOOK_BEFORE_MARIO_UPDATE, global_leaderboard_controls)
+hook_event(HOOK_ON_HUD_RENDER, render_global_leaderboard)

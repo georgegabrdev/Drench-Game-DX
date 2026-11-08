@@ -956,8 +956,6 @@ GAME_MODE_DATA = {
 			end
 		end,
 		nametagFunc = function(index, pos, name)
-			-- Add chance to kill on the nametag
-			name = cap_color_text(name, 25)
 			local dieMax = 20
 			local chance = math.min(gPlayerSyncTable[index].roundScore + 1, dieMax)
 			local percent = math.round(chance / dieMax * 100)
@@ -1062,8 +1060,7 @@ GAME_MODE_DATA = {
 		interact = PLAYER_INTERACTIONS_PVP,
 		kbStrength = 999,
 		music = "sliderintense",
-		maxTime = 300 * 30,
-
+		maxTime = 120 * 30,
 		hostUpdateFunc = function()
 			local alivePlayers = 0
 
@@ -1078,6 +1075,12 @@ GAME_MODE_DATA = {
 			if alivePlayers <= 1 then
 				return true
 			end
+		end,
+		onStartFunc = function()
+			for_each_connected_player(function(index)
+				gMarioStates[index].invincTimer = 5 * 30
+			end)
+			djui_chat_message_create(translate("deathhit_start"))
 		end,
 		onPvpFunc = function(attacker, victim, interaction)
 			local sAttacker = gPlayerSyncTable[attacker.playerIndex]
@@ -1101,7 +1104,7 @@ GAME_MODE_DATA = {
 		interact = PLAYER_INTERACTIONS_PVP,
 		kbStrength = 1,
 		music = "dark",
-		roundTime = 900,
+		roundTime = 3 * 60 * 30,
 		maxRounds = 10,
 		doEliminationPoints = true,
 		marioUpdateFunc = function(m)
@@ -1134,6 +1137,14 @@ GAME_MODE_DATA = {
 					gGlobalSyncTable.sheriffDPosY,
 					gGlobalSyncTable.sheriffDPosZ,
 					nil
+				)
+				log_to_console(
+					"Sheriff Suit spawned at: "
+						.. gGlobalSyncTable.sheriffDPosX
+						.. ", "
+						.. gGlobalSyncTable.sheriffDPosY
+						.. ", "
+						.. gGlobalSyncTable.sheriffDPosZ
 				)
 
 				gGlobalSyncTable.sheriffHeartSpawned = true
@@ -1190,7 +1201,13 @@ GAME_MODE_DATA = {
 			end
 			if sAttacker.murderIsSheriff and not sVictim.murderIsSheriff and not sVictim.murderIsMurderer then
 				eliminate_mario(attacker)
+				eliminate_mario(victim)
+
+				gGlobalSyncTable.sheriffDPosX = attacker.pos.x
+				gGlobalSyncTable.sheriffDPosY = attacker.pos.y
+				gGlobalSyncTable.sheriffDPosZ = attacker.pos.z
 				gGlobalSyncTable.sheriffDied = true
+
 				return true
 			end
 			if sAttacker.murderIsSheriff and sVictim.murderIsMurderer then

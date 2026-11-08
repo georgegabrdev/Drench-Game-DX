@@ -8,7 +8,6 @@ local function on_pvp_attack(attacker, victim, interaction)
 	local attackerIndex = attacker.playerIndex
 	local victimIndex = victim.playerIndex
 
-	-- Don't record self-attacks.
 	if attackerIndex == victimIndex then
 		return
 	end
@@ -51,19 +50,18 @@ end
 
 local function on_death(m)
 	local victimIndex = m.playerIndex
-	if victimIndex ~= 0 then
+
+	if victimIndex < 0 or victimIndex >= MAX_PLAYERS then
 		return
 	end
 
 	local killerIndex = lastAttacker[victimIndex]
 	local timer = attackTimer[victimIndex]
 
-	-- No recent PvP attack.
 	if killerIndex == nil or timer == nil then
 		return
 	end
 
-	-- Don't report suicide.
 	if killerIndex == victimIndex then
 		return
 	end
@@ -73,17 +71,6 @@ local function on_death(m)
 		attackTimer[victimIndex] = nil
 		return
 	end
-
-	local deathId = tostring(victimIndex) .. ":" .. tostring(killerIndex)
-
-	-- Don't send the same death twice.
-	if receivedDeaths[deathId] then
-		lastAttacker[victimIndex] = nil
-		attackTimer[victimIndex] = nil
-		return
-	end
-
-	receivedDeaths[deathId] = true
 
 	network_send(true, {
 		type = "death_message",
@@ -120,6 +107,7 @@ local function on_packet_receive(data)
 	end
 
 	local deathId = tostring(victimIndex) .. ":" .. tostring(killerIndex)
+
 	if receivedDeaths[deathId] then
 		return
 	end

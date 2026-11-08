@@ -321,4 +321,5 @@ return {
 	no_nearby_object = "Aucun objet proche trouvé",
 	all_spawned_objects_deleted = "\\#44ff44\\Tous les objets créés ont été supprimés !",
 	only_host_clear_objects = "\\#ff4444\\Seul l'hôte peut supprimer tous les objets !",
+	deathhit_start = "\\#ffff50\\Vous avez 5 secondes pour vous préparer à éliminer n'importe qui.",
 }
