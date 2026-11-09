@@ -252,17 +252,6 @@ local function create_menu_data()
 				end,
 			},
 			{
-				"Global Leaderboard",
-				function()
-					globalLeaderboardOpen = true
-					inMenu = false
-					globalLeaderboardScroll = 0
-					if not network_is_server() then
-						network_send(true, { id = GLOBAL_LEADERBOARD_PACKET, request = true })
-					end
-				end,
-			},
-			{
 				translate("credits"),
 				function()
 					enter_menu(9)
@@ -345,6 +334,17 @@ local function create_menu_data()
 					djui_open_pause_menu()
 				end,
 				false,
+			},
+			{
+				"Global Leaderboard",
+				function()
+					globalLeaderboardOpen = true
+					inMenu = false
+					globalLeaderboardScroll = 0
+					if not network_is_server() then
+						network_send(true, { id = GLOBAL_LEADERBOARD_PACKET, request = true })
+					end
+				end,
 			},
 		},
 		[2] = {
@@ -761,7 +761,7 @@ local function create_menu_data()
 			{
 				translate("code"),
 				function() end,
-				desc = "\\#3df5ff\\Flood \\#00ff00\\+\nCoopWare",
+				desc = "Flood +\nCoopWare",
 			},
 			{
 				translate("ideas"),
@@ -1481,15 +1481,21 @@ function render_global_leaderboard()
 	local screenWidth = djui_hud_get_screen_width()
 	local screenHeight = djui_hud_get_screen_height()
 	local entries = globalLeaderboardEntries or {}
-	local panelX = 22
-	local panelY = 18
-	local panelWidth = screenWidth - 44
-	local panelHeight = screenHeight - 36
-	local left = panelX + 24
-	local right = panelX + panelWidth - 24
-	local rowHeight = 38
-	local headerY = panelY + 112
-	local visibleRows = math.max(1, math.floor((panelHeight - 205) / rowHeight))
+	local panelWidth = screenWidth * 0.75
+	local panelHeight = screenHeight * 0.75
+	local panelX = (screenWidth - panelWidth) * 0.5
+	local panelY = (screenHeight - panelHeight) * 0.5
+	local left = panelX + panelWidth * 0.045
+	local right = panelX + panelWidth * 0.955
+	local rankX = left
+	local playerX = panelX + panelWidth * 0.15
+	local gameWinsX = panelX + panelWidth * 0.47
+	local minigameWinsX = panelX + panelWidth * 0.65
+	local pointsX = panelX + panelWidth * 0.88
+	local rowHeight = math.max(30, panelHeight * 0.058)
+	local headerY = panelY + panelHeight * 0.20
+	local footerY = panelY + panelHeight - 55
+	local visibleRows = math.max(1, math.floor((footerY - headerY - 62) / rowHeight))
 	local maxScroll = math.max(0, #entries - visibleRows)
 	globalLeaderboardScroll = math.clamp(globalLeaderboardScroll, 0, maxScroll)
 
@@ -1497,18 +1503,26 @@ function render_global_leaderboard()
 	djui_hud_render_rect(0, 0, screenWidth, screenHeight)
 	global_leaderboard_draw_rounded(panelX, panelY, panelWidth, panelHeight, 18, 55, 75, 250, 22)
 	global_leaderboard_draw_rounded(panelX + 5, panelY + 5, panelWidth - 10, panelHeight - 10, 5, 17, 31, 248, 18)
-	global_leaderboard_draw_text("Global Leaderboard", left, panelY + 24, 1.35, 255, 235, 105)
-	global_leaderboard_draw_text("Top 50 | Resets every 2 weeks", left, panelY + 66, 0.72, 180, 220, 235)
+	global_leaderboard_draw_text("GLOBAL LEADERBOARD", left, panelY + panelHeight * 0.045, 1.55, 255, 235, 105)
+	global_leaderboard_draw_text(
+		"TOP 50  |  RESETS EVERY 14 DAYS",
+		left,
+		panelY + panelHeight * 0.12,
+		0.9,
+		180,
+		220,
+		235
+	)
 
-	global_leaderboard_draw_rounded(left - 10, headerY - 10, right - left + 20, 36, 30, 68, 88, 255, 10)
-	global_leaderboard_draw_text("Rank", left, headerY, 0.72, 255, 255, 255)
-	global_leaderboard_draw_text("Player", left + 90, headerY, 0.72, 255, 255, 255)
-	global_leaderboard_draw_text("Game Wins", screenWidth * 0.47, headerY, 0.72, 255, 255, 255)
-	global_leaderboard_draw_text("Minigame Wins", screenWidth * 0.64, headerY, 0.72, 255, 255, 255)
-	global_leaderboard_draw_text("Points", screenWidth * 0.86, headerY, 0.72, 255, 255, 255)
+	global_leaderboard_draw_rounded(left - 10, headerY - 12, right - left + 20, 42, 30, 68, 88, 255, 10)
+	global_leaderboard_draw_text("RANK", rankX, headerY, 0.9, 255, 255, 255)
+	global_leaderboard_draw_text("PLAYER", playerX, headerY, 0.9, 255, 255, 255)
+	global_leaderboard_draw_text("GAME WINS", gameWinsX, headerY, 0.9, 255, 255, 255)
+	global_leaderboard_draw_text("MINIGAME WINS", minigameWinsX, headerY, 0.9, 255, 255, 255)
+	global_leaderboard_draw_text("POINTS", pointsX, headerY, 0.9, 255, 255, 255)
 
 	if #entries == 0 then
-		global_leaderboard_draw_text("No leaderboard entries yet.", left + 14, headerY + 58, 0.95, 210, 225, 235)
+		global_leaderboard_draw_text("No leaderboard entries yet.", left + 14, headerY + 68, 1.05, 210, 225, 235)
 	else
 		for row = 1, visibleRows do
 			local index = globalLeaderboardScroll + row
@@ -1516,7 +1530,7 @@ function render_global_leaderboard()
 			if not entry then
 				break
 			end
-			local y = headerY + 48 + (row - 1) * rowHeight
+			local y = headerY + 55 + (row - 1) * rowHeight
 			if row % 2 == 0 then
 				global_leaderboard_draw_rounded(
 					left - 10,
@@ -1533,17 +1547,17 @@ function render_global_leaderboard()
 			local rankColor = index == 1 and { 255, 220, 80 } or { 235, 245, 250 }
 			global_leaderboard_draw_text(
 				"#" .. tostring(index),
-				left,
+				rankX,
 				y,
-				0.82,
+				0.98,
 				rankColor[1],
 				rankColor[2],
 				rankColor[3]
 			)
-			global_leaderboard_draw_text(entry.name or "Unknown", left + 90, y, 0.82, 255, 255, 255)
-			global_leaderboard_draw_text(entry.gameWins or 0, screenWidth * 0.47, y, 0.82, 220, 235, 240)
-			global_leaderboard_draw_text(entry.minigameWins or 0, screenWidth * 0.64, y, 0.82, 220, 235, 240)
-			global_leaderboard_draw_text(entry.points or 0, screenWidth * 0.86, y, 0.82, 255, 230, 100)
+			global_leaderboard_draw_text(entry.name or "Unknown", playerX, y, 0.98, 255, 255, 255)
+			global_leaderboard_draw_text(entry.gameWins or 0, gameWinsX, y, 0.98, 220, 235, 240)
+			global_leaderboard_draw_text(entry.minigameWins or 0, minigameWinsX, y, 0.98, 220, 235, 240)
+			global_leaderboard_draw_text(entry.points or 0, pointsX, y, 0.98, 255, 230, 100)
 		end
 	end
 
@@ -1552,8 +1566,8 @@ function render_global_leaderboard()
 	global_leaderboard_draw_text(
 		string.format("%d-%d OF %d", first, last, #entries),
 		left,
-		screenHeight - 82,
-		0.68,
+		footerY,
+		0.82,
 		175,
 		205,
 		215
@@ -1561,8 +1575,8 @@ function render_global_leaderboard()
 	global_leaderboard_draw_text(
 		"STICK UP/DOWN: SCROLL     A: REFRESH     B: BACK TO MENU",
 		left,
-		screenHeight - 52,
-		0.72,
+		footerY + 30,
+		0.82,
 		255,
 		255,
 		255

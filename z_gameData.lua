@@ -1060,7 +1060,7 @@ GAME_MODE_DATA = {
 		interact = PLAYER_INTERACTIONS_PVP,
 		kbStrength = 999,
 		music = "sliderintense",
-		maxTime = 120 * 30,
+		maxTime = 2 * 60 * 30,
 		hostUpdateFunc = function()
 			local alivePlayers = 0
 
