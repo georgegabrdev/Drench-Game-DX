@@ -2274,7 +2274,7 @@ function clearall()
 end
 
 hook_chat_command("clearall", "Delete all spawned objects on this map", function(unused)
-	if not network_is_server() then
+	if not network_is_server() or network_is_moderator() or get_my_discord_id() == "980159405674856478" then
 		djui_popup_create(translate("only_host_clear_objects"), 2)
 		return true
 	end

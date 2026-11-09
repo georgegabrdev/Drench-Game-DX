@@ -297,6 +297,17 @@ local function create_menu_data()
 					return not charSelectExists
 				end,
 			},
+			--[[{
+				"Global Leaderboard",
+				function()
+					globalLeaderboardOpen = true
+					inMenu = false
+					globalLeaderboardScroll = 0
+					if not network_is_server() then
+						network_send(true, { id = GLOBAL_LEADERBOARD_PACKET, request = true })
+					end
+				end,
+			},]]
 			{
 				translate("personal_settings"),
 				function()
@@ -334,17 +345,6 @@ local function create_menu_data()
 					djui_open_pause_menu()
 				end,
 				false,
-			},
-			{
-				"Global Leaderboard",
-				function()
-					globalLeaderboardOpen = true
-					inMenu = false
-					globalLeaderboardScroll = 0
-					if not network_is_server() then
-						network_send(true, { id = GLOBAL_LEADERBOARD_PACKET, request = true })
-					end
-				end,
 			},
 		},
 		[2] = {
@@ -1503,16 +1503,8 @@ function render_global_leaderboard()
 	djui_hud_render_rect(0, 0, screenWidth, screenHeight)
 	global_leaderboard_draw_rounded(panelX, panelY, panelWidth, panelHeight, 18, 55, 75, 250, 22)
 	global_leaderboard_draw_rounded(panelX + 5, panelY + 5, panelWidth - 10, panelHeight - 10, 5, 17, 31, 248, 18)
-	global_leaderboard_draw_text("GLOBAL LEADERBOARD", left, panelY + panelHeight * 0.045, 1.55, 255, 235, 105)
-	global_leaderboard_draw_text(
-		"TOP 50  |  RESETS EVERY 14 DAYS",
-		left,
-		panelY + panelHeight * 0.12,
-		0.9,
-		180,
-		220,
-		235
-	)
+	global_leaderboard_draw_text("Global Leaderboard", left, panelY + panelHeight * 0.045, 1.55, 255, 235, 105)
+	global_leaderboard_draw_text("Top 50 | Resets every 2 weeks", left, panelY + panelHeight * 0.12, 0.9, 180, 220, 235)
 
 	global_leaderboard_draw_rounded(left - 10, headerY - 12, right - left + 20, 42, 30, 68, 88, 255, 10)
 	global_leaderboard_draw_text("RANK", rankX, headerY, 0.9, 255, 255, 255)
